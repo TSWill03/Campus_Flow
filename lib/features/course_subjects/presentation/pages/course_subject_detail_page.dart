@@ -1,0 +1,362 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../core/attachments/attachment_category.dart';
+import '../../../../core/attachments/attachment_owner_type.dart';
+import '../../../../core/attachments/attachment_providers.dart';
+import '../../../../core/attachments/stored_attachment.dart';
+import '../../../../core/utils/app_formatters.dart';
+import '../../../../shared/enums/app_enums.dart';
+import '../../../../shared/widgets/attachment_list_section.dart';
+import '../../../../shared/widgets/async_value_view.dart';
+import '../../../../shared/widgets/empty_state_card.dart';
+import '../../../../shared/widgets/section_header.dart';
+import '../../../../shared/widgets/status_chip.dart';
+import '../../domain/entities/course_subject.dart';
+import '../../domain/entities/course_subject_lesson.dart';
+import '../providers/course_subjects_provider.dart';
+
+class CourseSubjectDetailPage extends ConsumerStatefulWidget {
+  const CourseSubjectDetailPage({
+    super.key,
+    required this.subjectId,
+    this.startLessonOnOpen = false,
+  });
+
+  final String subjectId;
+  final bool startLessonOnOpen;
+
+  @override
+  ConsumerState<CourseSubjectDetailPage> createState() =>
+      _CourseSubjectDetailPageState();
+}
+
+class _CourseSubjectDetailPageState
+    extends ConsumerState<CourseSubjectDetailPage> {
+  bool _lessonAutoOpened = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final subjectAsync = ref.watch(courseSubjectByIdProvider(widget.subjectId));
+
+    return AsyncValueView<CourseSubject?>(
+      value: subjectAsync,
+      data: (subject) {
+        if (subject == null) {
+          return const Center(child: Text('Disciplina nao encontrada.'));
+        }
+
+        if (widget.startLessonOnOpen && !_lessonAutoOpened) {
+          _lessonAutoOpened = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              context.push('/subjects/${subject.id}/lessons/new');
+            }
+          });
+        }
+
+        final lessonsAsync = ref.watch(courseSubjectLessonsProvider(subject.id));
+        return AsyncValueView<List<CourseSubjectLesson>>(
+          value: lessonsAsync,
+          data: (lessons) => ListView(
+            children: [
+              SectionHeader(
+                title: subject.name,
+                subtitle:
+                    'Registre cada aula, anexos, atividades e provas para montar um historico completo da disciplina.',
+                action: Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => context.go('/subjects'),
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      label: const Text('Voltar'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () => context.push('/subjects/${subject.id}/edit'),
+                      icon: const Icon(Icons.edit_rounded),
+                      label: const Text('Editar disciplina'),
+                    ),
+                    FilledButton.icon(
+                      onPressed: () => context.push('/subjects/${subject.id}/lessons/new'),
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Nova aula'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    children: [
+                      _SummaryTile(label: 'Status', value: subject.status.label),
+                      _SummaryTile(label: 'Tipo', value: subject.type.label),
+                      _SummaryTile(
+                        label: 'Carga total',
+                        value: '${subject.workloadHours} h',
+                      ),
+                      _SummaryTile(
+                        label: 'Aulas registradas',
+                        value: '${lessons.length}',
+                      ),
+                      _SummaryTile(
+                        label: 'Horas registradas',
+                        value: AppFormatters.formatLessonHours(
+                          lessons.fold<double>(
+                            0,
+                            (total, lesson) => total + lesson.lessonHours,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (subject.notes != null && subject.notes!.trim().isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(subject.notes!),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              const SectionHeader(
+                title: 'Aulas',
+                subtitle:
+                    'Cada aula pode guardar conteudo, observacoes, provas e quantos arquivos voce precisar.',
+              ),
+              const SizedBox(height: 16),
+              if (lessons.isEmpty)
+                EmptyStateCard(
+                  icon: Icons.history_edu_outlined,
+                  title: 'Nenhuma aula registrada',
+                  message:
+                      'Assim que voce tiver uma aula, registre o conteudo e os materiais para montar um historico util da disciplina.',
+                  action: FilledButton(
+                    onPressed: () => context.push('/subjects/${subject.id}/lessons/new'),
+                    child: const Text('Registrar primeira aula'),
+                  ),
+                )
+              else
+                ...lessons.map(
+                  (lesson) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _LessonCard(
+                      lesson: lesson,
+                      onEdit: () => context.push(
+                        '/subjects/${subject.id}/lessons/${lesson.id}/edit',
+                      ),
+                      onDelete: () => _confirmDeleteLesson(context, lesson.id),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmDeleteLesson(BuildContext context, String lessonId) async {
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Remover aula?'),
+            content: const Text(
+              'A aula sera marcada como removida no armazenamento local.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Remover'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed) {
+      return;
+    }
+
+    await ref.read(courseSubjectRepositoryProvider).deleteLesson(lessonId);
+  }
+}
+
+class _SummaryTile extends StatelessWidget {
+  const _SummaryTile({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 180,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 8),
+          Text(value, style: Theme.of(context).textTheme.titleMedium),
+        ],
+      ),
+    );
+  }
+}
+
+class _LessonCard extends ConsumerWidget {
+  const _LessonCard({
+    required this.lesson,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final CourseSubjectLesson lesson;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final attachmentsAsync = ref.watch(
+      ownerAttachmentsProvider(
+        (
+          ownerType: AttachmentOwnerType.courseSubjectLesson,
+          ownerId: lesson.id,
+        ),
+      ),
+    );
+    final attachments = attachmentsAsync.valueOrNull;
+    final resolvedAttachments =
+        attachments != null && attachments.isNotEmpty
+            ? attachments
+            : _legacyAttachments();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  lesson.coveredContent,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                StatusChip(label: AppFormatters.formatDate(lesson.lessonDate)),
+                StatusChip(label: AppFormatters.formatLessonHours(lesson.lessonHours)),
+                if (resolvedAttachments.isNotEmpty)
+                  StatusChip(label: '${resolvedAttachments.length} arquivo(s)'),
+                if (lesson.assessmentDate != null) StatusChip(label: 'Prova'),
+              ],
+            ),
+            if (lesson.description != null && lesson.description!.trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(lesson.description!),
+            ],
+            if (lesson.activityDescription != null &&
+                lesson.activityDescription!.trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Atividade: ${lesson.activityDescription!}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+            if (lesson.assessmentDescription != null ||
+                lesson.assessmentDate != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                [
+                  if (lesson.assessmentDescription != null &&
+                      lesson.assessmentDescription!.trim().isNotEmpty)
+                    lesson.assessmentDescription!,
+                  if (lesson.assessmentDate != null)
+                    'Data: ${AppFormatters.formatDate(lesson.assessmentDate)}',
+                ].join(' - '),
+              ),
+            ],
+            if (attachmentsAsync.isLoading && resolvedAttachments.isEmpty) ...[
+              const SizedBox(height: 12),
+              const LinearProgressIndicator(),
+            ] else if (resolvedAttachments.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              AttachmentListSection(
+                title: 'Arquivos da aula',
+                subtitle:
+                    'Abra materiais, salve copias e acompanhe prazos das atividades anexadas.',
+                attachments: resolvedAttachments,
+                emptyMessage: 'Nenhum arquivo anexado.',
+                onToggleCompleted: (attachment, isCompleted) async {
+                  await ref.read(attachmentRepositoryProvider).updateCompletionStatus(
+                        attachmentId: attachment.id,
+                        isCompleted: isCompleted,
+                      );
+                },
+              ),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_rounded),
+                ),
+                IconButton(
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_outline_rounded),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<StoredAttachment> _legacyAttachments() {
+    if (lesson.pdfName == null || lesson.pdfBytes == null) {
+      return const [];
+    }
+
+    return [
+      StoredAttachment(
+        id: 'legacy_${lesson.id}',
+        createdAt: lesson.createdAt,
+        updatedAt: lesson.updatedAt,
+        syncStatus: lesson.syncStatus,
+        isDeleted: false,
+        ownerType: AttachmentOwnerType.courseSubjectLesson,
+        ownerId: lesson.id,
+        fileName: lesson.pdfName!,
+        bytes: lesson.pdfBytes!,
+        mimeType: 'application/pdf',
+        category: AttachmentCategory.document,
+      ),
+    ];
+  }
+}

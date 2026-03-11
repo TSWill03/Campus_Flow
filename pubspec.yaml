@@ -1,0 +1,41 @@
+name: campus_flow
+description: CampusFlow, um gerenciador academico pessoal offline-first para estudantes universitarios.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: 2.6.1
+  go_router: ^17.1.0
+  drift: ^2.32.0
+  drift_flutter: ^0.3.0
+  sqlite3_flutter_libs: ^0.6.0+eol
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.11.0
+  intl: ^0.20.2
+  uuid: ^4.5.3
+  file_picker: ^10.3.10
+  shared_preferences: ^2.5.4
+  google_fonts: ^8.0.2
+  path_provider: ^2.1.5
+  open_filex: ^4.7.0
+  path: ^1.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.12.2
+  drift_dev: ^2.32.0
+  freezed: ^3.2.5
+  json_serializable: ^6.13.0
+
+flutter:
+  uses-material-design: true
