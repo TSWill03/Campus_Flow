@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 class AttachmentDeadlineReminder {
   const AttachmentDeadlineReminder({
     required this.attachmentId,

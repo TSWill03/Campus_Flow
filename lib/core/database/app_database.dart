@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
@@ -52,6 +54,8 @@ class CourseSubjects extends Table {
   IntColumn get workloadHours => integer()();
   IntColumn get electiveHours => integer().nullable()();
   IntColumn get suggestedSemester => integer().nullable()();
+  IntColumn get scheduledWeekday => integer().nullable()();
+  RealColumn get defaultLessonHours => real().nullable()();
   TextColumn get type => text()();
   TextColumn get status => text()();
   TextColumn get notes => text().nullable()();
@@ -63,6 +67,8 @@ class CourseSubjects extends Table {
   List<String> get customConstraints => const [
         'CHECK (workload_hours >= 0)',
         'CHECK (elective_hours IS NULL OR elective_hours >= 0)',
+        'CHECK (scheduled_weekday IS NULL OR scheduled_weekday BETWEEN 1 AND 7)',
+        'CHECK (default_lesson_hours IS NULL OR default_lesson_hours > 0)',
   ];
 }
 
@@ -84,13 +90,14 @@ class CourseSubjectLessons extends Table {
   DateTimeColumn get assessmentDate => dateTime().nullable()();
   TextColumn get pdfName => text().nullable()();
   BlobColumn get pdfBytes => blob().nullable()();
+  BoolColumn get wasAbsent => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
 
   @override
   List<String> get customConstraints => const [
-        'CHECK (lesson_hours > 0)',
+        'CHECK (lesson_hours >= 0)',
       ];
 }
 
@@ -326,7 +333,7 @@ class AppDatabase extends _$AppDatabase {
         );
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -346,6 +353,9 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 5) {
             await _migrateFrom4To5(m);
+          }
+          if (from < 6) {
+            await _migrateFrom5To6(m);
           }
           await _createIndexes();
         },
@@ -501,6 +511,27 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  Future<void> _migrateFrom5To6(Migrator m) async {
+    await _addColumnIfMissing(
+      tableName: 'course_subjects',
+      columnName: 'scheduled_weekday',
+      statement:
+          'ALTER TABLE course_subjects ADD COLUMN scheduled_weekday INTEGER NULL',
+    );
+    await _addColumnIfMissing(
+      tableName: 'course_subjects',
+      columnName: 'default_lesson_hours',
+      statement:
+          'ALTER TABLE course_subjects ADD COLUMN default_lesson_hours REAL NULL',
+    );
+    await _addColumnIfMissing(
+      tableName: 'course_subject_lessons',
+      columnName: 'was_absent',
+      statement:
+          'ALTER TABLE course_subject_lessons ADD COLUMN was_absent INTEGER NOT NULL DEFAULT 0',
+    );
+  }
+
   Future<void> _addColumnIfMissing({
     required String tableName,
     required String columnName,
@@ -543,6 +574,9 @@ class AppDatabase extends _$AppDatabase {
       'CREATE INDEX IF NOT EXISTS idx_course_subjects_profile ON course_subjects(academic_profile_id, is_deleted)',
     );
     await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_course_subjects_weekday ON course_subjects(scheduled_weekday, is_deleted)',
+    );
+    await customStatement(
       'CREATE INDEX IF NOT EXISTS idx_course_subjects_status ON course_subjects(status)',
     );
     await customStatement(
@@ -553,6 +587,9 @@ class AppDatabase extends _$AppDatabase {
     );
     await customStatement(
       'CREATE INDEX IF NOT EXISTS idx_course_subject_lessons_sync_status ON course_subject_lessons(sync_status, is_deleted)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_course_subject_lessons_absence ON course_subject_lessons(course_subject_id, was_absent, lesson_date)',
     );
     await customStatement(
       'CREATE INDEX IF NOT EXISTS idx_attachments_owner ON attachments(owner_type, owner_id, is_deleted)',

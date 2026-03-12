@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'package:flutter/material.dart';
 
 class SectionHeader extends StatelessWidget {

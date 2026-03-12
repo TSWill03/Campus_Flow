@@ -1,12 +1,14 @@
+// Signature: dev.tswicolly03
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../academic_profile/domain/entities/academic_profile.dart';
-import '../../../academic_profile/presentation/providers/academic_profile_provider.dart';
 import '../../../../shared/enums/app_enums.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/form_submission_state.dart';
+import '../../../academic_profile/domain/entities/academic_profile.dart';
+import '../../../academic_profile/presentation/providers/academic_profile_provider.dart';
 import '../../domain/entities/course_subject.dart';
 import '../providers/course_subject_form_controller.dart';
 import '../providers/course_subjects_provider.dart';
@@ -49,8 +51,10 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
   late final TextEditingController _workloadController;
   late final TextEditingController _electiveHoursController;
   late final TextEditingController _semesterController;
+  late final TextEditingController _defaultLessonHoursController;
   late final TextEditingController _notesController;
   String? _selectedAcademicProfileId;
+  int? _selectedScheduledWeekday;
   late CourseSubjectType _selectedType;
   late CourseSubjectStatus _selectedStatus;
 
@@ -69,8 +73,12 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
     _semesterController = TextEditingController(
       text: subject?.suggestedSemester?.toString() ?? '',
     );
+    _defaultLessonHoursController = TextEditingController(
+      text: subject?.defaultLessonHours?.toString().replaceAll('.', ',') ?? '',
+    );
     _notesController = TextEditingController(text: subject?.notes ?? '');
     _selectedAcademicProfileId = subject?.academicProfileId;
+    _selectedScheduledWeekday = subject?.scheduledWeekday;
     _selectedType = subject?.type ?? CourseSubjectType.mandatory;
     _selectedStatus = subject?.status ?? CourseSubjectStatus.notStarted;
   }
@@ -82,6 +90,7 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
     _workloadController.dispose();
     _electiveHoursController.dispose();
     _semesterController.dispose();
+    _defaultLessonHoursController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -104,7 +113,8 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
       },
     );
 
-    final profiles = ref.watch(academicProfilesProvider).valueOrNull ?? const <AcademicProfile>[];
+    final profiles =
+        ref.watch(academicProfilesProvider).valueOrNull ?? const <AcademicProfile>[];
     if (_selectedAcademicProfileId == null && profiles.isNotEmpty) {
       _selectedAcademicProfileId =
           widget.initialSubject?.academicProfileId ??
@@ -206,6 +216,42 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
                           validator: _optionalNumber,
                         ),
                         const SizedBox(height: 16),
+                        DropdownButtonFormField<int>(
+                          initialValue: _selectedScheduledWeekday,
+                          decoration: const InputDecoration(
+                            labelText: 'Dia fixo da semana (opcional)',
+                            helperText:
+                                'Se informado, o app pode lembrar voce de registrar a aula ou marcar falta no dia certo.',
+                          ),
+                          items: [
+                            const DropdownMenuItem<int>(
+                              value: null,
+                              child: Text('Sem dia fixo'),
+                            ),
+                            ...List.generate(
+                              7,
+                              (index) => DropdownMenuItem<int>(
+                                value: index + 1,
+                                child: Text(_weekdayLabel(index + 1)),
+                              ),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() => _selectedScheduledWeekday = value);
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _defaultLessonHoursController,
+                          keyboardType:
+                              const TextInputType.numberWithOptions(decimal: true),
+                          decoration: const InputDecoration(
+                            labelText: 'Duracao padrao por aula (opcional)',
+                            hintText: 'Ex.: 2 ou 1,5',
+                          ),
+                          validator: _defaultLessonHoursValidator,
+                        ),
+                        const SizedBox(height: 16),
                         DropdownButtonFormField<CourseSubjectType>(
                           initialValue: _selectedType,
                           decoration:
@@ -252,7 +298,9 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
                         ),
                         const SizedBox(height: 24),
                         FilledButton.icon(
-                          onPressed: submissionState.isLoading || profiles.isEmpty ? null : _save,
+                          onPressed: submissionState.isLoading || profiles.isEmpty
+                              ? null
+                              : _save,
                           icon: submissionState.isLoading
                               ? const SizedBox(
                                   height: 18,
@@ -301,6 +349,25 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
     return null;
   }
 
+  String? _defaultLessonHoursValidator(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      if (_selectedScheduledWeekday != null) {
+        return 'Informe a duracao padrao da aula';
+      }
+      return null;
+    }
+
+    final parsed = _parseHours(value);
+    if (parsed == null || parsed <= 0) {
+      return 'Numero invalido';
+    }
+    return null;
+  }
+
+  double? _parseHours(String value) {
+    return double.tryParse(value.trim().replaceAll(',', '.'));
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -311,7 +378,8 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
           current: widget.initialSubject,
           academicProfileId: _selectedAcademicProfileId!,
           name: _nameController.text.trim(),
-          code: _codeController.text.trim().isEmpty ? null : _codeController.text.trim(),
+          code:
+              _codeController.text.trim().isEmpty ? null : _codeController.text.trim(),
           workloadHours: int.parse(_workloadController.text),
           electiveHours: _electiveHoursController.text.trim().isEmpty
               ? null
@@ -319,9 +387,14 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
           suggestedSemester: _semesterController.text.trim().isEmpty
               ? null
               : int.parse(_semesterController.text),
+          scheduledWeekday: _selectedScheduledWeekday,
+          defaultLessonHours: _defaultLessonHoursController.text.trim().isEmpty
+              ? null
+              : _parseHours(_defaultLessonHoursController.text),
           type: _selectedType,
           status: _selectedStatus,
-          notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+          notes:
+              _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
         );
 
     if (!mounted || savedSubject == null) {
@@ -344,5 +417,17 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
     }
 
     Navigator.of(context).pop();
+  }
+
+  String _weekdayLabel(int weekday) {
+    return const {
+      1: 'Segunda-feira',
+      2: 'Terca-feira',
+      3: 'Quarta-feira',
+      4: 'Quinta-feira',
+      5: 'Sexta-feira',
+      6: 'Sabado',
+      7: 'Domingo',
+    }[weekday]!;
   }
 }

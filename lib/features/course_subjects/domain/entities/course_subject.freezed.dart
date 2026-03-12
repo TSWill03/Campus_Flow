@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CourseSubject {
 
- String get id; String? get remoteId; DateTime get createdAt; DateTime get updatedAt; SyncStatus get syncStatus; bool get isDeleted; String? get academicProfileId; String get name; String? get code; int get workloadHours; int? get electiveHours; int? get suggestedSemester; CourseSubjectType get type; CourseSubjectStatus get status; String? get notes;
+ String get id; String? get remoteId; DateTime get createdAt; DateTime get updatedAt; SyncStatus get syncStatus; bool get isDeleted; String? get academicProfileId; String get name; String? get code; int get workloadHours; int? get electiveHours; int? get suggestedSemester; int? get scheduledWeekday; double? get defaultLessonHours; CourseSubjectType get type; CourseSubjectStatus get status; String? get notes;
 /// Create a copy of CourseSubject
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $CourseSubjectCopyWith<CourseSubject> get copyWith => _$CourseSubjectCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CourseSubject&&(identical(other.id, id) || other.id == id)&&(identical(other.remoteId, remoteId) || other.remoteId == remoteId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.syncStatus, syncStatus) || other.syncStatus == syncStatus)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.academicProfileId, academicProfileId) || other.academicProfileId == academicProfileId)&&(identical(other.name, name) || other.name == name)&&(identical(other.code, code) || other.code == code)&&(identical(other.workloadHours, workloadHours) || other.workloadHours == workloadHours)&&(identical(other.electiveHours, electiveHours) || other.electiveHours == electiveHours)&&(identical(other.suggestedSemester, suggestedSemester) || other.suggestedSemester == suggestedSemester)&&(identical(other.type, type) || other.type == type)&&(identical(other.status, status) || other.status == status)&&(identical(other.notes, notes) || other.notes == notes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CourseSubject&&(identical(other.id, id) || other.id == id)&&(identical(other.remoteId, remoteId) || other.remoteId == remoteId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.syncStatus, syncStatus) || other.syncStatus == syncStatus)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.academicProfileId, academicProfileId) || other.academicProfileId == academicProfileId)&&(identical(other.name, name) || other.name == name)&&(identical(other.code, code) || other.code == code)&&(identical(other.workloadHours, workloadHours) || other.workloadHours == workloadHours)&&(identical(other.electiveHours, electiveHours) || other.electiveHours == electiveHours)&&(identical(other.suggestedSemester, suggestedSemester) || other.suggestedSemester == suggestedSemester)&&(identical(other.scheduledWeekday, scheduledWeekday) || other.scheduledWeekday == scheduledWeekday)&&(identical(other.defaultLessonHours, defaultLessonHours) || other.defaultLessonHours == defaultLessonHours)&&(identical(other.type, type) || other.type == type)&&(identical(other.status, status) || other.status == status)&&(identical(other.notes, notes) || other.notes == notes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,remoteId,createdAt,updatedAt,syncStatus,isDeleted,academicProfileId,name,code,workloadHours,electiveHours,suggestedSemester,type,status,notes);
+int get hashCode => Object.hash(runtimeType,id,remoteId,createdAt,updatedAt,syncStatus,isDeleted,academicProfileId,name,code,workloadHours,electiveHours,suggestedSemester,scheduledWeekday,defaultLessonHours,type,status,notes);
 
 @override
 String toString() {
-  return 'CourseSubject(id: $id, remoteId: $remoteId, createdAt: $createdAt, updatedAt: $updatedAt, syncStatus: $syncStatus, isDeleted: $isDeleted, academicProfileId: $academicProfileId, name: $name, code: $code, workloadHours: $workloadHours, electiveHours: $electiveHours, suggestedSemester: $suggestedSemester, type: $type, status: $status, notes: $notes)';
+  return 'CourseSubject(id: $id, remoteId: $remoteId, createdAt: $createdAt, updatedAt: $updatedAt, syncStatus: $syncStatus, isDeleted: $isDeleted, academicProfileId: $academicProfileId, name: $name, code: $code, workloadHours: $workloadHours, electiveHours: $electiveHours, suggestedSemester: $suggestedSemester, scheduledWeekday: $scheduledWeekday, defaultLessonHours: $defaultLessonHours, type: $type, status: $status, notes: $notes)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $CourseSubjectCopyWith<$Res>  {
   factory $CourseSubjectCopyWith(CourseSubject value, $Res Function(CourseSubject) _then) = _$CourseSubjectCopyWithImpl;
 @useResult
 $Res call({
- String id, String? remoteId, DateTime createdAt, DateTime updatedAt, SyncStatus syncStatus, bool isDeleted, String? academicProfileId, String name, String? code, int workloadHours, int? electiveHours, int? suggestedSemester, CourseSubjectType type, CourseSubjectStatus status, String? notes
+ String id, String? remoteId, DateTime createdAt, DateTime updatedAt, SyncStatus syncStatus, bool isDeleted, String? academicProfileId, String name, String? code, int workloadHours, int? electiveHours, int? suggestedSemester, int? scheduledWeekday, double? defaultLessonHours, CourseSubjectType type, CourseSubjectStatus status, String? notes
 });
 
 
@@ -65,7 +65,7 @@ class _$CourseSubjectCopyWithImpl<$Res>
 
 /// Create a copy of CourseSubject
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? remoteId = freezed,Object? createdAt = null,Object? updatedAt = null,Object? syncStatus = null,Object? isDeleted = null,Object? academicProfileId = freezed,Object? name = null,Object? code = freezed,Object? workloadHours = null,Object? electiveHours = freezed,Object? suggestedSemester = freezed,Object? type = null,Object? status = null,Object? notes = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? remoteId = freezed,Object? createdAt = null,Object? updatedAt = null,Object? syncStatus = null,Object? isDeleted = null,Object? academicProfileId = freezed,Object? name = null,Object? code = freezed,Object? workloadHours = null,Object? electiveHours = freezed,Object? suggestedSemester = freezed,Object? scheduledWeekday = freezed,Object? defaultLessonHours = freezed,Object? type = null,Object? status = null,Object? notes = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,remoteId: freezed == remoteId ? _self.remoteId : remoteId // ignore: cast_nullable_to_non_nullable
@@ -79,7 +79,9 @@ as String,code: freezed == code ? _self.code : code // ignore: cast_nullable_to_
 as String?,workloadHours: null == workloadHours ? _self.workloadHours : workloadHours // ignore: cast_nullable_to_non_nullable
 as int,electiveHours: freezed == electiveHours ? _self.electiveHours : electiveHours // ignore: cast_nullable_to_non_nullable
 as int?,suggestedSemester: freezed == suggestedSemester ? _self.suggestedSemester : suggestedSemester // ignore: cast_nullable_to_non_nullable
-as int?,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as int?,scheduledWeekday: freezed == scheduledWeekday ? _self.scheduledWeekday : scheduledWeekday // ignore: cast_nullable_to_non_nullable
+as int?,defaultLessonHours: freezed == defaultLessonHours ? _self.defaultLessonHours : defaultLessonHours // ignore: cast_nullable_to_non_nullable
+as double?,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as CourseSubjectType,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as CourseSubjectStatus,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -167,10 +169,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? remoteId,  DateTime createdAt,  DateTime updatedAt,  SyncStatus syncStatus,  bool isDeleted,  String? academicProfileId,  String name,  String? code,  int workloadHours,  int? electiveHours,  int? suggestedSemester,  CourseSubjectType type,  CourseSubjectStatus status,  String? notes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? remoteId,  DateTime createdAt,  DateTime updatedAt,  SyncStatus syncStatus,  bool isDeleted,  String? academicProfileId,  String name,  String? code,  int workloadHours,  int? electiveHours,  int? suggestedSemester,  int? scheduledWeekday,  double? defaultLessonHours,  CourseSubjectType type,  CourseSubjectStatus status,  String? notes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CourseSubject() when $default != null:
-return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.syncStatus,_that.isDeleted,_that.academicProfileId,_that.name,_that.code,_that.workloadHours,_that.electiveHours,_that.suggestedSemester,_that.type,_that.status,_that.notes);case _:
+return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.syncStatus,_that.isDeleted,_that.academicProfileId,_that.name,_that.code,_that.workloadHours,_that.electiveHours,_that.suggestedSemester,_that.scheduledWeekday,_that.defaultLessonHours,_that.type,_that.status,_that.notes);case _:
   return orElse();
 
 }
@@ -188,10 +190,10 @@ return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.sy
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? remoteId,  DateTime createdAt,  DateTime updatedAt,  SyncStatus syncStatus,  bool isDeleted,  String? academicProfileId,  String name,  String? code,  int workloadHours,  int? electiveHours,  int? suggestedSemester,  CourseSubjectType type,  CourseSubjectStatus status,  String? notes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? remoteId,  DateTime createdAt,  DateTime updatedAt,  SyncStatus syncStatus,  bool isDeleted,  String? academicProfileId,  String name,  String? code,  int workloadHours,  int? electiveHours,  int? suggestedSemester,  int? scheduledWeekday,  double? defaultLessonHours,  CourseSubjectType type,  CourseSubjectStatus status,  String? notes)  $default,) {final _that = this;
 switch (_that) {
 case _CourseSubject():
-return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.syncStatus,_that.isDeleted,_that.academicProfileId,_that.name,_that.code,_that.workloadHours,_that.electiveHours,_that.suggestedSemester,_that.type,_that.status,_that.notes);case _:
+return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.syncStatus,_that.isDeleted,_that.academicProfileId,_that.name,_that.code,_that.workloadHours,_that.electiveHours,_that.suggestedSemester,_that.scheduledWeekday,_that.defaultLessonHours,_that.type,_that.status,_that.notes);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +210,10 @@ return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.sy
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? remoteId,  DateTime createdAt,  DateTime updatedAt,  SyncStatus syncStatus,  bool isDeleted,  String? academicProfileId,  String name,  String? code,  int workloadHours,  int? electiveHours,  int? suggestedSemester,  CourseSubjectType type,  CourseSubjectStatus status,  String? notes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? remoteId,  DateTime createdAt,  DateTime updatedAt,  SyncStatus syncStatus,  bool isDeleted,  String? academicProfileId,  String name,  String? code,  int workloadHours,  int? electiveHours,  int? suggestedSemester,  int? scheduledWeekday,  double? defaultLessonHours,  CourseSubjectType type,  CourseSubjectStatus status,  String? notes)?  $default,) {final _that = this;
 switch (_that) {
 case _CourseSubject() when $default != null:
-return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.syncStatus,_that.isDeleted,_that.academicProfileId,_that.name,_that.code,_that.workloadHours,_that.electiveHours,_that.suggestedSemester,_that.type,_that.status,_that.notes);case _:
+return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.syncStatus,_that.isDeleted,_that.academicProfileId,_that.name,_that.code,_that.workloadHours,_that.electiveHours,_that.suggestedSemester,_that.scheduledWeekday,_that.defaultLessonHours,_that.type,_that.status,_that.notes);case _:
   return null;
 
 }
@@ -223,7 +225,7 @@ return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.sy
 @JsonSerializable()
 
 class _CourseSubject implements CourseSubject {
-  const _CourseSubject({required this.id, this.remoteId, required this.createdAt, required this.updatedAt, required this.syncStatus, required this.isDeleted, this.academicProfileId, required this.name, this.code, required this.workloadHours, this.electiveHours, this.suggestedSemester, required this.type, required this.status, this.notes});
+  const _CourseSubject({required this.id, this.remoteId, required this.createdAt, required this.updatedAt, required this.syncStatus, required this.isDeleted, this.academicProfileId, required this.name, this.code, required this.workloadHours, this.electiveHours, this.suggestedSemester, this.scheduledWeekday, this.defaultLessonHours, required this.type, required this.status, this.notes});
   factory _CourseSubject.fromJson(Map<String, dynamic> json) => _$CourseSubjectFromJson(json);
 
 @override final  String id;
@@ -238,6 +240,8 @@ class _CourseSubject implements CourseSubject {
 @override final  int workloadHours;
 @override final  int? electiveHours;
 @override final  int? suggestedSemester;
+@override final  int? scheduledWeekday;
+@override final  double? defaultLessonHours;
 @override final  CourseSubjectType type;
 @override final  CourseSubjectStatus status;
 @override final  String? notes;
@@ -255,16 +259,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CourseSubject&&(identical(other.id, id) || other.id == id)&&(identical(other.remoteId, remoteId) || other.remoteId == remoteId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.syncStatus, syncStatus) || other.syncStatus == syncStatus)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.academicProfileId, academicProfileId) || other.academicProfileId == academicProfileId)&&(identical(other.name, name) || other.name == name)&&(identical(other.code, code) || other.code == code)&&(identical(other.workloadHours, workloadHours) || other.workloadHours == workloadHours)&&(identical(other.electiveHours, electiveHours) || other.electiveHours == electiveHours)&&(identical(other.suggestedSemester, suggestedSemester) || other.suggestedSemester == suggestedSemester)&&(identical(other.type, type) || other.type == type)&&(identical(other.status, status) || other.status == status)&&(identical(other.notes, notes) || other.notes == notes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CourseSubject&&(identical(other.id, id) || other.id == id)&&(identical(other.remoteId, remoteId) || other.remoteId == remoteId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.syncStatus, syncStatus) || other.syncStatus == syncStatus)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.academicProfileId, academicProfileId) || other.academicProfileId == academicProfileId)&&(identical(other.name, name) || other.name == name)&&(identical(other.code, code) || other.code == code)&&(identical(other.workloadHours, workloadHours) || other.workloadHours == workloadHours)&&(identical(other.electiveHours, electiveHours) || other.electiveHours == electiveHours)&&(identical(other.suggestedSemester, suggestedSemester) || other.suggestedSemester == suggestedSemester)&&(identical(other.scheduledWeekday, scheduledWeekday) || other.scheduledWeekday == scheduledWeekday)&&(identical(other.defaultLessonHours, defaultLessonHours) || other.defaultLessonHours == defaultLessonHours)&&(identical(other.type, type) || other.type == type)&&(identical(other.status, status) || other.status == status)&&(identical(other.notes, notes) || other.notes == notes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,remoteId,createdAt,updatedAt,syncStatus,isDeleted,academicProfileId,name,code,workloadHours,electiveHours,suggestedSemester,type,status,notes);
+int get hashCode => Object.hash(runtimeType,id,remoteId,createdAt,updatedAt,syncStatus,isDeleted,academicProfileId,name,code,workloadHours,electiveHours,suggestedSemester,scheduledWeekday,defaultLessonHours,type,status,notes);
 
 @override
 String toString() {
-  return 'CourseSubject(id: $id, remoteId: $remoteId, createdAt: $createdAt, updatedAt: $updatedAt, syncStatus: $syncStatus, isDeleted: $isDeleted, academicProfileId: $academicProfileId, name: $name, code: $code, workloadHours: $workloadHours, electiveHours: $electiveHours, suggestedSemester: $suggestedSemester, type: $type, status: $status, notes: $notes)';
+  return 'CourseSubject(id: $id, remoteId: $remoteId, createdAt: $createdAt, updatedAt: $updatedAt, syncStatus: $syncStatus, isDeleted: $isDeleted, academicProfileId: $academicProfileId, name: $name, code: $code, workloadHours: $workloadHours, electiveHours: $electiveHours, suggestedSemester: $suggestedSemester, scheduledWeekday: $scheduledWeekday, defaultLessonHours: $defaultLessonHours, type: $type, status: $status, notes: $notes)';
 }
 
 
@@ -275,7 +279,7 @@ abstract mixin class _$CourseSubjectCopyWith<$Res> implements $CourseSubjectCopy
   factory _$CourseSubjectCopyWith(_CourseSubject value, $Res Function(_CourseSubject) _then) = __$CourseSubjectCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? remoteId, DateTime createdAt, DateTime updatedAt, SyncStatus syncStatus, bool isDeleted, String? academicProfileId, String name, String? code, int workloadHours, int? electiveHours, int? suggestedSemester, CourseSubjectType type, CourseSubjectStatus status, String? notes
+ String id, String? remoteId, DateTime createdAt, DateTime updatedAt, SyncStatus syncStatus, bool isDeleted, String? academicProfileId, String name, String? code, int workloadHours, int? electiveHours, int? suggestedSemester, int? scheduledWeekday, double? defaultLessonHours, CourseSubjectType type, CourseSubjectStatus status, String? notes
 });
 
 
@@ -292,7 +296,7 @@ class __$CourseSubjectCopyWithImpl<$Res>
 
 /// Create a copy of CourseSubject
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? remoteId = freezed,Object? createdAt = null,Object? updatedAt = null,Object? syncStatus = null,Object? isDeleted = null,Object? academicProfileId = freezed,Object? name = null,Object? code = freezed,Object? workloadHours = null,Object? electiveHours = freezed,Object? suggestedSemester = freezed,Object? type = null,Object? status = null,Object? notes = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? remoteId = freezed,Object? createdAt = null,Object? updatedAt = null,Object? syncStatus = null,Object? isDeleted = null,Object? academicProfileId = freezed,Object? name = null,Object? code = freezed,Object? workloadHours = null,Object? electiveHours = freezed,Object? suggestedSemester = freezed,Object? scheduledWeekday = freezed,Object? defaultLessonHours = freezed,Object? type = null,Object? status = null,Object? notes = freezed,}) {
   return _then(_CourseSubject(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,remoteId: freezed == remoteId ? _self.remoteId : remoteId // ignore: cast_nullable_to_non_nullable
@@ -306,7 +310,9 @@ as String,code: freezed == code ? _self.code : code // ignore: cast_nullable_to_
 as String?,workloadHours: null == workloadHours ? _self.workloadHours : workloadHours // ignore: cast_nullable_to_non_nullable
 as int,electiveHours: freezed == electiveHours ? _self.electiveHours : electiveHours // ignore: cast_nullable_to_non_nullable
 as int?,suggestedSemester: freezed == suggestedSemester ? _self.suggestedSemester : suggestedSemester // ignore: cast_nullable_to_non_nullable
-as int?,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as int?,scheduledWeekday: freezed == scheduledWeekday ? _self.scheduledWeekday : scheduledWeekday // ignore: cast_nullable_to_non_nullable
+as int?,defaultLessonHours: freezed == defaultLessonHours ? _self.defaultLessonHours : defaultLessonHours // ignore: cast_nullable_to_non_nullable
+as double?,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as CourseSubjectType,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as CourseSubjectStatus,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
 as String?,

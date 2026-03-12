@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';

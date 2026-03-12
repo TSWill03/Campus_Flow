@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 #include "win32_window.h"
 
 #include <dwmapi.h>

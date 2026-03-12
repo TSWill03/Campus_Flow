@@ -1,8 +1,11 @@
+// Signature: dev.tswicolly03
+
 import 'package:drift/drift.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../domain/entities/attachment_deadline_reminder.dart';
 import '../../domain/entities/dashboard_summary.dart';
+import '../../domain/entities/scheduled_subject_prompt.dart';
 
 class DriftDashboardRepository {
   DriftDashboardRepository(this._database);
@@ -127,6 +130,68 @@ class DriftDashboardRepository {
                   lessonTitle: row.read<String>('lesson_title'),
                   fileName: row.read<String>('file_name'),
                   dueDate: row.read<DateTime>('due_date'),
+                ),
+              )
+              .toList(),
+        );
+  }
+
+  Stream<List<ScheduledSubjectPrompt>> watchTodayScheduledSubjects({
+    String? academicProfileId,
+  }) {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    final filteredProfileId =
+        academicProfileId != null && academicProfileId.isNotEmpty
+            ? academicProfileId
+            : null;
+    final profileFilter =
+        filteredProfileId != null ? ' AND s.academic_profile_id = ?4' : '';
+    final variables = <Variable<Object>>[
+      Variable<int>(now.weekday),
+      Variable<DateTime>(startOfDay),
+      Variable<DateTime>(endOfDay),
+      if (filteredProfileId != null) Variable<String>(filteredProfileId),
+    ];
+
+    return _database
+        .customSelect(
+          '''
+          SELECT
+            s.id AS subject_id,
+            s.name AS subject_name,
+            s.scheduled_weekday,
+            s.default_lesson_hours
+          FROM course_subjects s
+          WHERE s.is_deleted = 0
+            AND s.status NOT IN ('completed', 'dropped')
+            AND s.scheduled_weekday = ?1$profileFilter
+            AND NOT EXISTS (
+              SELECT 1
+              FROM course_subject_lessons l
+              WHERE l.course_subject_id = s.id
+                AND l.is_deleted = 0
+                AND l.lesson_date >= ?2
+                AND l.lesson_date < ?3
+            )
+          ORDER BY s.name ASC
+          ''',
+          variables: variables,
+          readsFrom: {
+            _database.courseSubjects,
+            _database.courseSubjectLessons,
+          },
+        )
+        .watch()
+        .map(
+          (rows) => rows
+              .map(
+                (row) => ScheduledSubjectPrompt(
+                  subjectId: row.read<String>('subject_id'),
+                  subjectName: row.read<String>('subject_name'),
+                  scheduledWeekday: row.read<int>('scheduled_weekday'),
+                  defaultLessonHours: row.read<double?>('default_lesson_hours'),
                 ),
               )
               .toList(),

@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 #ifndef RUNNER_WIN32_WINDOW_H_
 #define RUNNER_WIN32_WINDOW_H_
 

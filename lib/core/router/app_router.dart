@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -99,9 +101,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/subjects/:subjectId/lessons/new',
-        builder: (context, state) => CourseSubjectLessonFormPage(
-          subjectId: state.pathParameters['subjectId']!,
-        ),
+        builder: (context, state) {
+          final rawDate = state.uri.queryParameters['lessonDate'];
+          final rawHours = state.uri.queryParameters['lessonHours'];
+          return CourseSubjectLessonFormPage(
+            subjectId: state.pathParameters['subjectId']!,
+            initialLessonDate: rawDate == null ? null : DateTime.tryParse(rawDate),
+            suggestedLessonHours:
+                rawHours == null ? null : double.tryParse(rawHours),
+          );
+        },
       ),
       GoRoute(
         path: '/subjects/:subjectId/lessons/:lessonId/edit',

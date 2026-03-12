@@ -1,3 +1,5 @@
+# Signature: dev.tswicolly03
+
 name: campus_flow
 description: CampusFlow, um gerenciador academico pessoal offline-first para estudantes universitarios.
 publish_to: 'none'
@@ -36,6 +38,24 @@ dev_dependencies:
   drift_dev: ^2.32.0
   freezed: ^3.2.5
   json_serializable: ^6.13.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: assets/branding/campus_flow_icon.png
+  adaptive_icon_background: "#D7F2EE"
+  adaptive_icon_foreground: assets/branding/campus_flow_icon_foreground.png
+  adaptive_icon_monochrome: assets/branding/campus_flow_icon_foreground.png
+  web:
+    generate: true
+    image_path: assets/branding/campus_flow_icon.png
+    background_color: "#D7F2EE"
+    theme_color: "#0F766E"
+  windows:
+    generate: true
+    image_path: assets/branding/campus_flow_icon.png

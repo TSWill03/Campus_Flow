@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,15 +21,23 @@ class CourseSubjectLessonFormPage extends ConsumerWidget {
     super.key,
     required this.subjectId,
     this.lessonId,
+    this.initialLessonDate,
+    this.suggestedLessonHours,
   });
 
   final String subjectId;
   final String? lessonId;
+  final DateTime? initialLessonDate;
+  final double? suggestedLessonHours;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (lessonId == null) {
-      return _CourseSubjectLessonForm(subjectId: subjectId);
+      return _CourseSubjectLessonForm(
+        subjectId: subjectId,
+        initialLessonDate: initialLessonDate,
+        suggestedLessonHours: suggestedLessonHours,
+      );
     }
 
     final lessonAsync = ref.watch(courseSubjectLessonByIdProvider(lessonId!));
@@ -36,6 +46,8 @@ class CourseSubjectLessonFormPage extends ConsumerWidget {
       data: (lesson) => _CourseSubjectLessonForm(
         subjectId: subjectId,
         initialLesson: lesson,
+        initialLessonDate: initialLessonDate,
+        suggestedLessonHours: suggestedLessonHours,
       ),
     );
   }
@@ -45,10 +57,14 @@ class _CourseSubjectLessonForm extends ConsumerStatefulWidget {
   const _CourseSubjectLessonForm({
     required this.subjectId,
     this.initialLesson,
+    this.initialLessonDate,
+    this.suggestedLessonHours,
   });
 
   final String subjectId;
   final CourseSubjectLesson? initialLesson;
+  final DateTime? initialLessonDate;
+  final double? suggestedLessonHours;
 
   @override
   ConsumerState<_CourseSubjectLessonForm> createState() =>
@@ -75,7 +91,9 @@ class _CourseSubjectLessonFormState
     _contentController =
         TextEditingController(text: lesson?.coveredContent ?? '');
     _hoursController = TextEditingController(
-      text: lesson?.lessonHours.toString().replaceAll('.', ',') ?? '',
+      text: lesson?.lessonHours.toString().replaceAll('.', ',') ??
+          widget.suggestedLessonHours?.toString().replaceAll('.', ',') ??
+          '',
     );
     _descriptionController =
         TextEditingController(text: lesson?.description ?? '');
@@ -83,7 +101,7 @@ class _CourseSubjectLessonFormState
         TextEditingController(text: lesson?.activityDescription ?? '');
     _assessmentController =
         TextEditingController(text: lesson?.assessmentDescription ?? '');
-    _lessonDate = lesson?.lessonDate ?? DateTime.now();
+    _lessonDate = lesson?.lessonDate ?? widget.initialLessonDate ?? DateTime.now();
     _assessmentDate = lesson?.assessmentDate;
   }
 

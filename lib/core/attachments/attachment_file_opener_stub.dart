@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'attachment_file_result.dart';
 
 Future<AttachmentOpenResult> openPlatformAttachmentBytes({

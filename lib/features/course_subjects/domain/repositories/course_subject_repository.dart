@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import '../entities/course_subject.dart';
 import '../entities/course_subject_lesson.dart';
 import '../../../../shared/enums/app_enums.dart';

@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'package:uuid/uuid.dart';
 
 class IdGenerator {

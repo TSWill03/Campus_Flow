@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'attachment_owner_type.dart';
 import 'stored_attachment.dart';
 

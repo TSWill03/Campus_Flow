@@ -1210,6 +1210,28 @@ class $CourseSubjectsTable extends CourseSubjects
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _scheduledWeekdayMeta = const VerificationMeta(
+    'scheduledWeekday',
+  );
+  @override
+  late final GeneratedColumn<int> scheduledWeekday = GeneratedColumn<int>(
+    'scheduled_weekday',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _defaultLessonHoursMeta =
+      const VerificationMeta('defaultLessonHours');
+  @override
+  late final GeneratedColumn<double> defaultLessonHours =
+      GeneratedColumn<double>(
+        'default_lesson_hours',
+        aliasedName,
+        true,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _typeMeta = const VerificationMeta('type');
   @override
   late final GeneratedColumn<String> type = GeneratedColumn<String>(
@@ -1251,6 +1273,8 @@ class $CourseSubjectsTable extends CourseSubjects
     workloadHours,
     electiveHours,
     suggestedSemester,
+    scheduledWeekday,
+    defaultLessonHours,
     type,
     status,
     notes,
@@ -1360,6 +1384,24 @@ class $CourseSubjectsTable extends CourseSubjects
         ),
       );
     }
+    if (data.containsKey('scheduled_weekday')) {
+      context.handle(
+        _scheduledWeekdayMeta,
+        scheduledWeekday.isAcceptableOrUnknown(
+          data['scheduled_weekday']!,
+          _scheduledWeekdayMeta,
+        ),
+      );
+    }
+    if (data.containsKey('default_lesson_hours')) {
+      context.handle(
+        _defaultLessonHoursMeta,
+        defaultLessonHours.isAcceptableOrUnknown(
+          data['default_lesson_hours']!,
+          _defaultLessonHoursMeta,
+        ),
+      );
+    }
     if (data.containsKey('type')) {
       context.handle(
         _typeMeta,
@@ -1439,6 +1481,14 @@ class $CourseSubjectsTable extends CourseSubjects
         DriftSqlType.int,
         data['${effectivePrefix}suggested_semester'],
       ),
+      scheduledWeekday: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}scheduled_weekday'],
+      ),
+      defaultLessonHours: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}default_lesson_hours'],
+      ),
       type: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}type'],
@@ -1474,6 +1524,8 @@ class CourseSubjectRow extends DataClass
   final int workloadHours;
   final int? electiveHours;
   final int? suggestedSemester;
+  final int? scheduledWeekday;
+  final double? defaultLessonHours;
   final String type;
   final String status;
   final String? notes;
@@ -1490,6 +1542,8 @@ class CourseSubjectRow extends DataClass
     required this.workloadHours,
     this.electiveHours,
     this.suggestedSemester,
+    this.scheduledWeekday,
+    this.defaultLessonHours,
     required this.type,
     required this.status,
     this.notes,
@@ -1518,6 +1572,12 @@ class CourseSubjectRow extends DataClass
     }
     if (!nullToAbsent || suggestedSemester != null) {
       map['suggested_semester'] = Variable<int>(suggestedSemester);
+    }
+    if (!nullToAbsent || scheduledWeekday != null) {
+      map['scheduled_weekday'] = Variable<int>(scheduledWeekday);
+    }
+    if (!nullToAbsent || defaultLessonHours != null) {
+      map['default_lesson_hours'] = Variable<double>(defaultLessonHours);
     }
     map['type'] = Variable<String>(type);
     map['status'] = Variable<String>(status);
@@ -1549,6 +1609,12 @@ class CourseSubjectRow extends DataClass
       suggestedSemester: suggestedSemester == null && nullToAbsent
           ? const Value.absent()
           : Value(suggestedSemester),
+      scheduledWeekday: scheduledWeekday == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scheduledWeekday),
+      defaultLessonHours: defaultLessonHours == null && nullToAbsent
+          ? const Value.absent()
+          : Value(defaultLessonHours),
       type: Value(type),
       status: Value(status),
       notes: notes == null && nullToAbsent
@@ -1577,6 +1643,10 @@ class CourseSubjectRow extends DataClass
       workloadHours: serializer.fromJson<int>(json['workloadHours']),
       electiveHours: serializer.fromJson<int?>(json['electiveHours']),
       suggestedSemester: serializer.fromJson<int?>(json['suggestedSemester']),
+      scheduledWeekday: serializer.fromJson<int?>(json['scheduledWeekday']),
+      defaultLessonHours: serializer.fromJson<double?>(
+        json['defaultLessonHours'],
+      ),
       type: serializer.fromJson<String>(json['type']),
       status: serializer.fromJson<String>(json['status']),
       notes: serializer.fromJson<String?>(json['notes']),
@@ -1598,6 +1668,8 @@ class CourseSubjectRow extends DataClass
       'workloadHours': serializer.toJson<int>(workloadHours),
       'electiveHours': serializer.toJson<int?>(electiveHours),
       'suggestedSemester': serializer.toJson<int?>(suggestedSemester),
+      'scheduledWeekday': serializer.toJson<int?>(scheduledWeekday),
+      'defaultLessonHours': serializer.toJson<double?>(defaultLessonHours),
       'type': serializer.toJson<String>(type),
       'status': serializer.toJson<String>(status),
       'notes': serializer.toJson<String?>(notes),
@@ -1617,6 +1689,8 @@ class CourseSubjectRow extends DataClass
     int? workloadHours,
     Value<int?> electiveHours = const Value.absent(),
     Value<int?> suggestedSemester = const Value.absent(),
+    Value<int?> scheduledWeekday = const Value.absent(),
+    Value<double?> defaultLessonHours = const Value.absent(),
     String? type,
     String? status,
     Value<String?> notes = const Value.absent(),
@@ -1639,6 +1713,12 @@ class CourseSubjectRow extends DataClass
     suggestedSemester: suggestedSemester.present
         ? suggestedSemester.value
         : this.suggestedSemester,
+    scheduledWeekday: scheduledWeekday.present
+        ? scheduledWeekday.value
+        : this.scheduledWeekday,
+    defaultLessonHours: defaultLessonHours.present
+        ? defaultLessonHours.value
+        : this.defaultLessonHours,
     type: type ?? this.type,
     status: status ?? this.status,
     notes: notes.present ? notes.value : this.notes,
@@ -1667,6 +1747,12 @@ class CourseSubjectRow extends DataClass
       suggestedSemester: data.suggestedSemester.present
           ? data.suggestedSemester.value
           : this.suggestedSemester,
+      scheduledWeekday: data.scheduledWeekday.present
+          ? data.scheduledWeekday.value
+          : this.scheduledWeekday,
+      defaultLessonHours: data.defaultLessonHours.present
+          ? data.defaultLessonHours.value
+          : this.defaultLessonHours,
       type: data.type.present ? data.type.value : this.type,
       status: data.status.present ? data.status.value : this.status,
       notes: data.notes.present ? data.notes.value : this.notes,
@@ -1688,6 +1774,8 @@ class CourseSubjectRow extends DataClass
           ..write('workloadHours: $workloadHours, ')
           ..write('electiveHours: $electiveHours, ')
           ..write('suggestedSemester: $suggestedSemester, ')
+          ..write('scheduledWeekday: $scheduledWeekday, ')
+          ..write('defaultLessonHours: $defaultLessonHours, ')
           ..write('type: $type, ')
           ..write('status: $status, ')
           ..write('notes: $notes')
@@ -1709,6 +1797,8 @@ class CourseSubjectRow extends DataClass
     workloadHours,
     electiveHours,
     suggestedSemester,
+    scheduledWeekday,
+    defaultLessonHours,
     type,
     status,
     notes,
@@ -1729,6 +1819,8 @@ class CourseSubjectRow extends DataClass
           other.workloadHours == this.workloadHours &&
           other.electiveHours == this.electiveHours &&
           other.suggestedSemester == this.suggestedSemester &&
+          other.scheduledWeekday == this.scheduledWeekday &&
+          other.defaultLessonHours == this.defaultLessonHours &&
           other.type == this.type &&
           other.status == this.status &&
           other.notes == this.notes);
@@ -1747,6 +1839,8 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
   final Value<int> workloadHours;
   final Value<int?> electiveHours;
   final Value<int?> suggestedSemester;
+  final Value<int?> scheduledWeekday;
+  final Value<double?> defaultLessonHours;
   final Value<String> type;
   final Value<String> status;
   final Value<String?> notes;
@@ -1764,6 +1858,8 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
     this.workloadHours = const Value.absent(),
     this.electiveHours = const Value.absent(),
     this.suggestedSemester = const Value.absent(),
+    this.scheduledWeekday = const Value.absent(),
+    this.defaultLessonHours = const Value.absent(),
     this.type = const Value.absent(),
     this.status = const Value.absent(),
     this.notes = const Value.absent(),
@@ -1782,6 +1878,8 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
     required int workloadHours,
     this.electiveHours = const Value.absent(),
     this.suggestedSemester = const Value.absent(),
+    this.scheduledWeekday = const Value.absent(),
+    this.defaultLessonHours = const Value.absent(),
     required String type,
     required String status,
     this.notes = const Value.absent(),
@@ -1807,6 +1905,8 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
     Expression<int>? workloadHours,
     Expression<int>? electiveHours,
     Expression<int>? suggestedSemester,
+    Expression<int>? scheduledWeekday,
+    Expression<double>? defaultLessonHours,
     Expression<String>? type,
     Expression<String>? status,
     Expression<String>? notes,
@@ -1825,6 +1925,9 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
       if (workloadHours != null) 'workload_hours': workloadHours,
       if (electiveHours != null) 'elective_hours': electiveHours,
       if (suggestedSemester != null) 'suggested_semester': suggestedSemester,
+      if (scheduledWeekday != null) 'scheduled_weekday': scheduledWeekday,
+      if (defaultLessonHours != null)
+        'default_lesson_hours': defaultLessonHours,
       if (type != null) 'type': type,
       if (status != null) 'status': status,
       if (notes != null) 'notes': notes,
@@ -1845,6 +1948,8 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
     Value<int>? workloadHours,
     Value<int?>? electiveHours,
     Value<int?>? suggestedSemester,
+    Value<int?>? scheduledWeekday,
+    Value<double?>? defaultLessonHours,
     Value<String>? type,
     Value<String>? status,
     Value<String?>? notes,
@@ -1863,6 +1968,8 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
       workloadHours: workloadHours ?? this.workloadHours,
       electiveHours: electiveHours ?? this.electiveHours,
       suggestedSemester: suggestedSemester ?? this.suggestedSemester,
+      scheduledWeekday: scheduledWeekday ?? this.scheduledWeekday,
+      defaultLessonHours: defaultLessonHours ?? this.defaultLessonHours,
       type: type ?? this.type,
       status: status ?? this.status,
       notes: notes ?? this.notes,
@@ -1909,6 +2016,12 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
     if (suggestedSemester.present) {
       map['suggested_semester'] = Variable<int>(suggestedSemester.value);
     }
+    if (scheduledWeekday.present) {
+      map['scheduled_weekday'] = Variable<int>(scheduledWeekday.value);
+    }
+    if (defaultLessonHours.present) {
+      map['default_lesson_hours'] = Variable<double>(defaultLessonHours.value);
+    }
     if (type.present) {
       map['type'] = Variable<String>(type.value);
     }
@@ -1939,6 +2052,8 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
           ..write('workloadHours: $workloadHours, ')
           ..write('electiveHours: $electiveHours, ')
           ..write('suggestedSemester: $suggestedSemester, ')
+          ..write('scheduledWeekday: $scheduledWeekday, ')
+          ..write('defaultLessonHours: $defaultLessonHours, ')
           ..write('type: $type, ')
           ..write('status: $status, ')
           ..write('notes: $notes, ')
@@ -2136,6 +2251,21 @@ class $CourseSubjectLessonsTable extends CourseSubjectLessons
     type: DriftSqlType.blob,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _wasAbsentMeta = const VerificationMeta(
+    'wasAbsent',
+  );
+  @override
+  late final GeneratedColumn<bool> wasAbsent = GeneratedColumn<bool>(
+    'was_absent',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("was_absent" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2154,6 +2284,7 @@ class $CourseSubjectLessonsTable extends CourseSubjectLessons
     assessmentDate,
     pdfName,
     pdfBytes,
+    wasAbsent,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2297,6 +2428,12 @@ class $CourseSubjectLessonsTable extends CourseSubjectLessons
         pdfBytes.isAcceptableOrUnknown(data['pdf_bytes']!, _pdfBytesMeta),
       );
     }
+    if (data.containsKey('was_absent')) {
+      context.handle(
+        _wasAbsentMeta,
+        wasAbsent.isAcceptableOrUnknown(data['was_absent']!, _wasAbsentMeta),
+      );
+    }
     return context;
   }
 
@@ -2370,6 +2507,10 @@ class $CourseSubjectLessonsTable extends CourseSubjectLessons
         DriftSqlType.blob,
         data['${effectivePrefix}pdf_bytes'],
       ),
+      wasAbsent: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}was_absent'],
+      )!,
     );
   }
 
@@ -2397,6 +2538,7 @@ class CourseSubjectLessonRow extends DataClass
   final DateTime? assessmentDate;
   final String? pdfName;
   final Uint8List? pdfBytes;
+  final bool wasAbsent;
   const CourseSubjectLessonRow({
     required this.id,
     this.remoteId,
@@ -2414,6 +2556,7 @@ class CourseSubjectLessonRow extends DataClass
     this.assessmentDate,
     this.pdfName,
     this.pdfBytes,
+    required this.wasAbsent,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2448,6 +2591,7 @@ class CourseSubjectLessonRow extends DataClass
     if (!nullToAbsent || pdfBytes != null) {
       map['pdf_bytes'] = Variable<Uint8List>(pdfBytes);
     }
+    map['was_absent'] = Variable<bool>(wasAbsent);
     return map;
   }
 
@@ -2483,6 +2627,7 @@ class CourseSubjectLessonRow extends DataClass
       pdfBytes: pdfBytes == null && nullToAbsent
           ? const Value.absent()
           : Value(pdfBytes),
+      wasAbsent: Value(wasAbsent),
     );
   }
 
@@ -2512,6 +2657,7 @@ class CourseSubjectLessonRow extends DataClass
       assessmentDate: serializer.fromJson<DateTime?>(json['assessmentDate']),
       pdfName: serializer.fromJson<String?>(json['pdfName']),
       pdfBytes: serializer.fromJson<Uint8List?>(json['pdfBytes']),
+      wasAbsent: serializer.fromJson<bool>(json['wasAbsent']),
     );
   }
   @override
@@ -2536,6 +2682,7 @@ class CourseSubjectLessonRow extends DataClass
       'assessmentDate': serializer.toJson<DateTime?>(assessmentDate),
       'pdfName': serializer.toJson<String?>(pdfName),
       'pdfBytes': serializer.toJson<Uint8List?>(pdfBytes),
+      'wasAbsent': serializer.toJson<bool>(wasAbsent),
     };
   }
 
@@ -2556,6 +2703,7 @@ class CourseSubjectLessonRow extends DataClass
     Value<DateTime?> assessmentDate = const Value.absent(),
     Value<String?> pdfName = const Value.absent(),
     Value<Uint8List?> pdfBytes = const Value.absent(),
+    bool? wasAbsent,
   }) => CourseSubjectLessonRow(
     id: id ?? this.id,
     remoteId: remoteId.present ? remoteId.value : this.remoteId,
@@ -2579,6 +2727,7 @@ class CourseSubjectLessonRow extends DataClass
         : this.assessmentDate,
     pdfName: pdfName.present ? pdfName.value : this.pdfName,
     pdfBytes: pdfBytes.present ? pdfBytes.value : this.pdfBytes,
+    wasAbsent: wasAbsent ?? this.wasAbsent,
   );
   CourseSubjectLessonRow copyWithCompanion(CourseSubjectLessonsCompanion data) {
     return CourseSubjectLessonRow(
@@ -2616,6 +2765,7 @@ class CourseSubjectLessonRow extends DataClass
           : this.assessmentDate,
       pdfName: data.pdfName.present ? data.pdfName.value : this.pdfName,
       pdfBytes: data.pdfBytes.present ? data.pdfBytes.value : this.pdfBytes,
+      wasAbsent: data.wasAbsent.present ? data.wasAbsent.value : this.wasAbsent,
     );
   }
 
@@ -2637,7 +2787,8 @@ class CourseSubjectLessonRow extends DataClass
           ..write('assessmentDescription: $assessmentDescription, ')
           ..write('assessmentDate: $assessmentDate, ')
           ..write('pdfName: $pdfName, ')
-          ..write('pdfBytes: $pdfBytes')
+          ..write('pdfBytes: $pdfBytes, ')
+          ..write('wasAbsent: $wasAbsent')
           ..write(')'))
         .toString();
   }
@@ -2660,6 +2811,7 @@ class CourseSubjectLessonRow extends DataClass
     assessmentDate,
     pdfName,
     $driftBlobEquality.hash(pdfBytes),
+    wasAbsent,
   );
   @override
   bool operator ==(Object other) =>
@@ -2680,7 +2832,8 @@ class CourseSubjectLessonRow extends DataClass
           other.assessmentDescription == this.assessmentDescription &&
           other.assessmentDate == this.assessmentDate &&
           other.pdfName == this.pdfName &&
-          $driftBlobEquality.equals(other.pdfBytes, this.pdfBytes));
+          $driftBlobEquality.equals(other.pdfBytes, this.pdfBytes) &&
+          other.wasAbsent == this.wasAbsent);
 }
 
 class CourseSubjectLessonsCompanion
@@ -2701,6 +2854,7 @@ class CourseSubjectLessonsCompanion
   final Value<DateTime?> assessmentDate;
   final Value<String?> pdfName;
   final Value<Uint8List?> pdfBytes;
+  final Value<bool> wasAbsent;
   final Value<int> rowid;
   const CourseSubjectLessonsCompanion({
     this.id = const Value.absent(),
@@ -2719,6 +2873,7 @@ class CourseSubjectLessonsCompanion
     this.assessmentDate = const Value.absent(),
     this.pdfName = const Value.absent(),
     this.pdfBytes = const Value.absent(),
+    this.wasAbsent = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CourseSubjectLessonsCompanion.insert({
@@ -2738,6 +2893,7 @@ class CourseSubjectLessonsCompanion
     this.assessmentDate = const Value.absent(),
     this.pdfName = const Value.absent(),
     this.pdfBytes = const Value.absent(),
+    this.wasAbsent = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        createdAt = Value(createdAt),
@@ -2764,6 +2920,7 @@ class CourseSubjectLessonsCompanion
     Expression<DateTime>? assessmentDate,
     Expression<String>? pdfName,
     Expression<Uint8List>? pdfBytes,
+    Expression<bool>? wasAbsent,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2785,6 +2942,7 @@ class CourseSubjectLessonsCompanion
       if (assessmentDate != null) 'assessment_date': assessmentDate,
       if (pdfName != null) 'pdf_name': pdfName,
       if (pdfBytes != null) 'pdf_bytes': pdfBytes,
+      if (wasAbsent != null) 'was_absent': wasAbsent,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2806,6 +2964,7 @@ class CourseSubjectLessonsCompanion
     Value<DateTime?>? assessmentDate,
     Value<String?>? pdfName,
     Value<Uint8List?>? pdfBytes,
+    Value<bool>? wasAbsent,
     Value<int>? rowid,
   }) {
     return CourseSubjectLessonsCompanion(
@@ -2826,6 +2985,7 @@ class CourseSubjectLessonsCompanion
       assessmentDate: assessmentDate ?? this.assessmentDate,
       pdfName: pdfName ?? this.pdfName,
       pdfBytes: pdfBytes ?? this.pdfBytes,
+      wasAbsent: wasAbsent ?? this.wasAbsent,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2883,6 +3043,9 @@ class CourseSubjectLessonsCompanion
     if (pdfBytes.present) {
       map['pdf_bytes'] = Variable<Uint8List>(pdfBytes.value);
     }
+    if (wasAbsent.present) {
+      map['was_absent'] = Variable<bool>(wasAbsent.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2908,6 +3071,7 @@ class CourseSubjectLessonsCompanion
           ..write('assessmentDate: $assessmentDate, ')
           ..write('pdfName: $pdfName, ')
           ..write('pdfBytes: $pdfBytes, ')
+          ..write('wasAbsent: $wasAbsent, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -10579,6 +10743,8 @@ typedef $$CourseSubjectsTableCreateCompanionBuilder =
       required int workloadHours,
       Value<int?> electiveHours,
       Value<int?> suggestedSemester,
+      Value<int?> scheduledWeekday,
+      Value<double?> defaultLessonHours,
       required String type,
       required String status,
       Value<String?> notes,
@@ -10598,6 +10764,8 @@ typedef $$CourseSubjectsTableUpdateCompanionBuilder =
       Value<int> workloadHours,
       Value<int?> electiveHours,
       Value<int?> suggestedSemester,
+      Value<int?> scheduledWeekday,
+      Value<double?> defaultLessonHours,
       Value<String> type,
       Value<String> status,
       Value<String?> notes,
@@ -10731,6 +10899,16 @@ class $$CourseSubjectsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get scheduledWeekday => $composableBuilder(
+    column: $table.scheduledWeekday,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get defaultLessonHours => $composableBuilder(
+    column: $table.defaultLessonHours,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get type => $composableBuilder(
     column: $table.type,
     builder: (column) => ColumnFilters(column),
@@ -10859,6 +11037,16 @@ class $$CourseSubjectsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get scheduledWeekday => $composableBuilder(
+    column: $table.scheduledWeekday,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get defaultLessonHours => $composableBuilder(
+    column: $table.defaultLessonHours,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get type => $composableBuilder(
     column: $table.type,
     builder: (column) => ColumnOrderings(column),
@@ -10945,6 +11133,16 @@ class $$CourseSubjectsTableAnnotationComposer
 
   GeneratedColumn<int> get suggestedSemester => $composableBuilder(
     column: $table.suggestedSemester,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get scheduledWeekday => $composableBuilder(
+    column: $table.scheduledWeekday,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get defaultLessonHours => $composableBuilder(
+    column: $table.defaultLessonHours,
     builder: (column) => column,
   );
 
@@ -11052,6 +11250,8 @@ class $$CourseSubjectsTableTableManager
                 Value<int> workloadHours = const Value.absent(),
                 Value<int?> electiveHours = const Value.absent(),
                 Value<int?> suggestedSemester = const Value.absent(),
+                Value<int?> scheduledWeekday = const Value.absent(),
+                Value<double?> defaultLessonHours = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
@@ -11069,6 +11269,8 @@ class $$CourseSubjectsTableTableManager
                 workloadHours: workloadHours,
                 electiveHours: electiveHours,
                 suggestedSemester: suggestedSemester,
+                scheduledWeekday: scheduledWeekday,
+                defaultLessonHours: defaultLessonHours,
                 type: type,
                 status: status,
                 notes: notes,
@@ -11088,6 +11290,8 @@ class $$CourseSubjectsTableTableManager
                 required int workloadHours,
                 Value<int?> electiveHours = const Value.absent(),
                 Value<int?> suggestedSemester = const Value.absent(),
+                Value<int?> scheduledWeekday = const Value.absent(),
+                Value<double?> defaultLessonHours = const Value.absent(),
                 required String type,
                 required String status,
                 Value<String?> notes = const Value.absent(),
@@ -11105,6 +11309,8 @@ class $$CourseSubjectsTableTableManager
                 workloadHours: workloadHours,
                 electiveHours: electiveHours,
                 suggestedSemester: suggestedSemester,
+                scheduledWeekday: scheduledWeekday,
+                defaultLessonHours: defaultLessonHours,
                 type: type,
                 status: status,
                 notes: notes,
@@ -11225,6 +11431,7 @@ typedef $$CourseSubjectLessonsTableCreateCompanionBuilder =
       Value<DateTime?> assessmentDate,
       Value<String?> pdfName,
       Value<Uint8List?> pdfBytes,
+      Value<bool> wasAbsent,
       Value<int> rowid,
     });
 typedef $$CourseSubjectLessonsTableUpdateCompanionBuilder =
@@ -11245,6 +11452,7 @@ typedef $$CourseSubjectLessonsTableUpdateCompanionBuilder =
       Value<DateTime?> assessmentDate,
       Value<String?> pdfName,
       Value<Uint8List?> pdfBytes,
+      Value<bool> wasAbsent,
       Value<int> rowid,
     });
 
@@ -11368,6 +11576,11 @@ class $$CourseSubjectLessonsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<bool> get wasAbsent => $composableBuilder(
+    column: $table.wasAbsent,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$CourseSubjectsTableFilterComposer get courseSubjectId {
     final $$CourseSubjectsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -11476,6 +11689,11 @@ class $$CourseSubjectLessonsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get wasAbsent => $composableBuilder(
+    column: $table.wasAbsent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CourseSubjectsTableOrderingComposer get courseSubjectId {
     final $$CourseSubjectsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -11570,6 +11788,9 @@ class $$CourseSubjectLessonsTableAnnotationComposer
   GeneratedColumn<Uint8List> get pdfBytes =>
       $composableBuilder(column: $table.pdfBytes, builder: (column) => column);
 
+  GeneratedColumn<bool> get wasAbsent =>
+      $composableBuilder(column: $table.wasAbsent, builder: (column) => column);
+
   $$CourseSubjectsTableAnnotationComposer get courseSubjectId {
     final $$CourseSubjectsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -11646,6 +11867,7 @@ class $$CourseSubjectLessonsTableTableManager
                 Value<DateTime?> assessmentDate = const Value.absent(),
                 Value<String?> pdfName = const Value.absent(),
                 Value<Uint8List?> pdfBytes = const Value.absent(),
+                Value<bool> wasAbsent = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CourseSubjectLessonsCompanion(
                 id: id,
@@ -11664,6 +11886,7 @@ class $$CourseSubjectLessonsTableTableManager
                 assessmentDate: assessmentDate,
                 pdfName: pdfName,
                 pdfBytes: pdfBytes,
+                wasAbsent: wasAbsent,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -11684,6 +11907,7 @@ class $$CourseSubjectLessonsTableTableManager
                 Value<DateTime?> assessmentDate = const Value.absent(),
                 Value<String?> pdfName = const Value.absent(),
                 Value<Uint8List?> pdfBytes = const Value.absent(),
+                Value<bool> wasAbsent = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CourseSubjectLessonsCompanion.insert(
                 id: id,
@@ -11702,6 +11926,7 @@ class $$CourseSubjectLessonsTableTableManager
                 assessmentDate: assessmentDate,
                 pdfName: pdfName,
                 pdfBytes: pdfBytes,
+                wasAbsent: wasAbsent,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

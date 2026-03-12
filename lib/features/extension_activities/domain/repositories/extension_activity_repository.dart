@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import '../entities/extension_activity.dart';
 
 abstract interface class ExtensionActivityRepository {

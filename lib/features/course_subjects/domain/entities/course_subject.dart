@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../../core/sync/sync_status.dart';
@@ -21,6 +23,8 @@ abstract class CourseSubject with _$CourseSubject {
     required int workloadHours,
     int? electiveHours,
     int? suggestedSemester,
+    int? scheduledWeekday,
+    double? defaultLessonHours,
     required CourseSubjectType type,
     required CourseSubjectStatus status,
     String? notes,

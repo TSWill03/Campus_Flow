@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'dart:convert';
 
 import 'package:drift/native.dart';

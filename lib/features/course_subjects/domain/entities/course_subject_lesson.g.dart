@@ -28,6 +28,7 @@ _CourseSubjectLesson _$CourseSubjectLessonFromJson(Map<String, dynamic> json) =>
       pdfBytes: (json['pdfBytes'] as List<dynamic>?)
           ?.map((e) => (e as num).toInt())
           .toList(),
+      wasAbsent: json['wasAbsent'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$CourseSubjectLessonToJson(
@@ -49,6 +50,7 @@ Map<String, dynamic> _$CourseSubjectLessonToJson(
   'assessmentDate': instance.assessmentDate?.toIso8601String(),
   'pdfName': instance.pdfName,
   'pdfBytes': instance.pdfBytes,
+  'wasAbsent': instance.wasAbsent,
 };
 
 const _$SyncStatusEnumMap = {

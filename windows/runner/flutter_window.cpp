@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 #include "flutter_window.h"
 
 #include <optional>

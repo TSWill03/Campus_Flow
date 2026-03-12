@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import '../enums/form_submission_status.dart';
 
 class FormSubmissionState {

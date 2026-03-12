@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import '../entities/complementary_activity.dart';
 
 abstract interface class ComplementaryActivityRepository {

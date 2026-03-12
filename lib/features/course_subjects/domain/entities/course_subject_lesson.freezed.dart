@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CourseSubjectLesson {
 
- String get id; String? get remoteId; DateTime get createdAt; DateTime get updatedAt; SyncStatus get syncStatus; bool get isDeleted; String get courseSubjectId; DateTime get lessonDate; double get lessonHours; String get coveredContent; String? get description; String? get activityDescription; String? get assessmentDescription; DateTime? get assessmentDate; String? get pdfName; List<int>? get pdfBytes;
+ String get id; String? get remoteId; DateTime get createdAt; DateTime get updatedAt; SyncStatus get syncStatus; bool get isDeleted; String get courseSubjectId; DateTime get lessonDate; double get lessonHours; String get coveredContent; String? get description; String? get activityDescription; String? get assessmentDescription; DateTime? get assessmentDate; String? get pdfName; List<int>? get pdfBytes; bool get wasAbsent;
 /// Create a copy of CourseSubjectLesson
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $CourseSubjectLessonCopyWith<CourseSubjectLesson> get copyWith => _$CourseSubjec
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CourseSubjectLesson&&(identical(other.id, id) || other.id == id)&&(identical(other.remoteId, remoteId) || other.remoteId == remoteId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.syncStatus, syncStatus) || other.syncStatus == syncStatus)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.courseSubjectId, courseSubjectId) || other.courseSubjectId == courseSubjectId)&&(identical(other.lessonDate, lessonDate) || other.lessonDate == lessonDate)&&(identical(other.lessonHours, lessonHours) || other.lessonHours == lessonHours)&&(identical(other.coveredContent, coveredContent) || other.coveredContent == coveredContent)&&(identical(other.description, description) || other.description == description)&&(identical(other.activityDescription, activityDescription) || other.activityDescription == activityDescription)&&(identical(other.assessmentDescription, assessmentDescription) || other.assessmentDescription == assessmentDescription)&&(identical(other.assessmentDate, assessmentDate) || other.assessmentDate == assessmentDate)&&(identical(other.pdfName, pdfName) || other.pdfName == pdfName)&&const DeepCollectionEquality().equals(other.pdfBytes, pdfBytes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CourseSubjectLesson&&(identical(other.id, id) || other.id == id)&&(identical(other.remoteId, remoteId) || other.remoteId == remoteId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.syncStatus, syncStatus) || other.syncStatus == syncStatus)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.courseSubjectId, courseSubjectId) || other.courseSubjectId == courseSubjectId)&&(identical(other.lessonDate, lessonDate) || other.lessonDate == lessonDate)&&(identical(other.lessonHours, lessonHours) || other.lessonHours == lessonHours)&&(identical(other.coveredContent, coveredContent) || other.coveredContent == coveredContent)&&(identical(other.description, description) || other.description == description)&&(identical(other.activityDescription, activityDescription) || other.activityDescription == activityDescription)&&(identical(other.assessmentDescription, assessmentDescription) || other.assessmentDescription == assessmentDescription)&&(identical(other.assessmentDate, assessmentDate) || other.assessmentDate == assessmentDate)&&(identical(other.pdfName, pdfName) || other.pdfName == pdfName)&&const DeepCollectionEquality().equals(other.pdfBytes, pdfBytes)&&(identical(other.wasAbsent, wasAbsent) || other.wasAbsent == wasAbsent));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,remoteId,createdAt,updatedAt,syncStatus,isDeleted,courseSubjectId,lessonDate,lessonHours,coveredContent,description,activityDescription,assessmentDescription,assessmentDate,pdfName,const DeepCollectionEquality().hash(pdfBytes));
+int get hashCode => Object.hash(runtimeType,id,remoteId,createdAt,updatedAt,syncStatus,isDeleted,courseSubjectId,lessonDate,lessonHours,coveredContent,description,activityDescription,assessmentDescription,assessmentDate,pdfName,const DeepCollectionEquality().hash(pdfBytes),wasAbsent);
 
 @override
 String toString() {
-  return 'CourseSubjectLesson(id: $id, remoteId: $remoteId, createdAt: $createdAt, updatedAt: $updatedAt, syncStatus: $syncStatus, isDeleted: $isDeleted, courseSubjectId: $courseSubjectId, lessonDate: $lessonDate, lessonHours: $lessonHours, coveredContent: $coveredContent, description: $description, activityDescription: $activityDescription, assessmentDescription: $assessmentDescription, assessmentDate: $assessmentDate, pdfName: $pdfName, pdfBytes: $pdfBytes)';
+  return 'CourseSubjectLesson(id: $id, remoteId: $remoteId, createdAt: $createdAt, updatedAt: $updatedAt, syncStatus: $syncStatus, isDeleted: $isDeleted, courseSubjectId: $courseSubjectId, lessonDate: $lessonDate, lessonHours: $lessonHours, coveredContent: $coveredContent, description: $description, activityDescription: $activityDescription, assessmentDescription: $assessmentDescription, assessmentDate: $assessmentDate, pdfName: $pdfName, pdfBytes: $pdfBytes, wasAbsent: $wasAbsent)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $CourseSubjectLessonCopyWith<$Res>  {
   factory $CourseSubjectLessonCopyWith(CourseSubjectLesson value, $Res Function(CourseSubjectLesson) _then) = _$CourseSubjectLessonCopyWithImpl;
 @useResult
 $Res call({
- String id, String? remoteId, DateTime createdAt, DateTime updatedAt, SyncStatus syncStatus, bool isDeleted, String courseSubjectId, DateTime lessonDate, double lessonHours, String coveredContent, String? description, String? activityDescription, String? assessmentDescription, DateTime? assessmentDate, String? pdfName, List<int>? pdfBytes
+ String id, String? remoteId, DateTime createdAt, DateTime updatedAt, SyncStatus syncStatus, bool isDeleted, String courseSubjectId, DateTime lessonDate, double lessonHours, String coveredContent, String? description, String? activityDescription, String? assessmentDescription, DateTime? assessmentDate, String? pdfName, List<int>? pdfBytes, bool wasAbsent
 });
 
 
@@ -65,7 +65,7 @@ class _$CourseSubjectLessonCopyWithImpl<$Res>
 
 /// Create a copy of CourseSubjectLesson
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? remoteId = freezed,Object? createdAt = null,Object? updatedAt = null,Object? syncStatus = null,Object? isDeleted = null,Object? courseSubjectId = null,Object? lessonDate = null,Object? lessonHours = null,Object? coveredContent = null,Object? description = freezed,Object? activityDescription = freezed,Object? assessmentDescription = freezed,Object? assessmentDate = freezed,Object? pdfName = freezed,Object? pdfBytes = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? remoteId = freezed,Object? createdAt = null,Object? updatedAt = null,Object? syncStatus = null,Object? isDeleted = null,Object? courseSubjectId = null,Object? lessonDate = null,Object? lessonHours = null,Object? coveredContent = null,Object? description = freezed,Object? activityDescription = freezed,Object? assessmentDescription = freezed,Object? assessmentDate = freezed,Object? pdfName = freezed,Object? pdfBytes = freezed,Object? wasAbsent = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,remoteId: freezed == remoteId ? _self.remoteId : remoteId // ignore: cast_nullable_to_non_nullable
@@ -83,7 +83,8 @@ as String?,assessmentDescription: freezed == assessmentDescription ? _self.asses
 as String?,assessmentDate: freezed == assessmentDate ? _self.assessmentDate : assessmentDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,pdfName: freezed == pdfName ? _self.pdfName : pdfName // ignore: cast_nullable_to_non_nullable
 as String?,pdfBytes: freezed == pdfBytes ? _self.pdfBytes : pdfBytes // ignore: cast_nullable_to_non_nullable
-as List<int>?,
+as List<int>?,wasAbsent: null == wasAbsent ? _self.wasAbsent : wasAbsent // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -168,10 +169,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? remoteId,  DateTime createdAt,  DateTime updatedAt,  SyncStatus syncStatus,  bool isDeleted,  String courseSubjectId,  DateTime lessonDate,  double lessonHours,  String coveredContent,  String? description,  String? activityDescription,  String? assessmentDescription,  DateTime? assessmentDate,  String? pdfName,  List<int>? pdfBytes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? remoteId,  DateTime createdAt,  DateTime updatedAt,  SyncStatus syncStatus,  bool isDeleted,  String courseSubjectId,  DateTime lessonDate,  double lessonHours,  String coveredContent,  String? description,  String? activityDescription,  String? assessmentDescription,  DateTime? assessmentDate,  String? pdfName,  List<int>? pdfBytes,  bool wasAbsent)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CourseSubjectLesson() when $default != null:
-return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.syncStatus,_that.isDeleted,_that.courseSubjectId,_that.lessonDate,_that.lessonHours,_that.coveredContent,_that.description,_that.activityDescription,_that.assessmentDescription,_that.assessmentDate,_that.pdfName,_that.pdfBytes);case _:
+return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.syncStatus,_that.isDeleted,_that.courseSubjectId,_that.lessonDate,_that.lessonHours,_that.coveredContent,_that.description,_that.activityDescription,_that.assessmentDescription,_that.assessmentDate,_that.pdfName,_that.pdfBytes,_that.wasAbsent);case _:
   return orElse();
 
 }
@@ -189,10 +190,10 @@ return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.sy
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? remoteId,  DateTime createdAt,  DateTime updatedAt,  SyncStatus syncStatus,  bool isDeleted,  String courseSubjectId,  DateTime lessonDate,  double lessonHours,  String coveredContent,  String? description,  String? activityDescription,  String? assessmentDescription,  DateTime? assessmentDate,  String? pdfName,  List<int>? pdfBytes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? remoteId,  DateTime createdAt,  DateTime updatedAt,  SyncStatus syncStatus,  bool isDeleted,  String courseSubjectId,  DateTime lessonDate,  double lessonHours,  String coveredContent,  String? description,  String? activityDescription,  String? assessmentDescription,  DateTime? assessmentDate,  String? pdfName,  List<int>? pdfBytes,  bool wasAbsent)  $default,) {final _that = this;
 switch (_that) {
 case _CourseSubjectLesson():
-return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.syncStatus,_that.isDeleted,_that.courseSubjectId,_that.lessonDate,_that.lessonHours,_that.coveredContent,_that.description,_that.activityDescription,_that.assessmentDescription,_that.assessmentDate,_that.pdfName,_that.pdfBytes);case _:
+return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.syncStatus,_that.isDeleted,_that.courseSubjectId,_that.lessonDate,_that.lessonHours,_that.coveredContent,_that.description,_that.activityDescription,_that.assessmentDescription,_that.assessmentDate,_that.pdfName,_that.pdfBytes,_that.wasAbsent);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -209,10 +210,10 @@ return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.sy
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? remoteId,  DateTime createdAt,  DateTime updatedAt,  SyncStatus syncStatus,  bool isDeleted,  String courseSubjectId,  DateTime lessonDate,  double lessonHours,  String coveredContent,  String? description,  String? activityDescription,  String? assessmentDescription,  DateTime? assessmentDate,  String? pdfName,  List<int>? pdfBytes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? remoteId,  DateTime createdAt,  DateTime updatedAt,  SyncStatus syncStatus,  bool isDeleted,  String courseSubjectId,  DateTime lessonDate,  double lessonHours,  String coveredContent,  String? description,  String? activityDescription,  String? assessmentDescription,  DateTime? assessmentDate,  String? pdfName,  List<int>? pdfBytes,  bool wasAbsent)?  $default,) {final _that = this;
 switch (_that) {
 case _CourseSubjectLesson() when $default != null:
-return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.syncStatus,_that.isDeleted,_that.courseSubjectId,_that.lessonDate,_that.lessonHours,_that.coveredContent,_that.description,_that.activityDescription,_that.assessmentDescription,_that.assessmentDate,_that.pdfName,_that.pdfBytes);case _:
+return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.syncStatus,_that.isDeleted,_that.courseSubjectId,_that.lessonDate,_that.lessonHours,_that.coveredContent,_that.description,_that.activityDescription,_that.assessmentDescription,_that.assessmentDate,_that.pdfName,_that.pdfBytes,_that.wasAbsent);case _:
   return null;
 
 }
@@ -224,7 +225,7 @@ return $default(_that.id,_that.remoteId,_that.createdAt,_that.updatedAt,_that.sy
 @JsonSerializable()
 
 class _CourseSubjectLesson implements CourseSubjectLesson {
-  const _CourseSubjectLesson({required this.id, this.remoteId, required this.createdAt, required this.updatedAt, required this.syncStatus, required this.isDeleted, required this.courseSubjectId, required this.lessonDate, required this.lessonHours, required this.coveredContent, this.description, this.activityDescription, this.assessmentDescription, this.assessmentDate, this.pdfName, final  List<int>? pdfBytes}): _pdfBytes = pdfBytes;
+  const _CourseSubjectLesson({required this.id, this.remoteId, required this.createdAt, required this.updatedAt, required this.syncStatus, required this.isDeleted, required this.courseSubjectId, required this.lessonDate, required this.lessonHours, required this.coveredContent, this.description, this.activityDescription, this.assessmentDescription, this.assessmentDate, this.pdfName, final  List<int>? pdfBytes, this.wasAbsent = false}): _pdfBytes = pdfBytes;
   factory _CourseSubjectLesson.fromJson(Map<String, dynamic> json) => _$CourseSubjectLessonFromJson(json);
 
 @override final  String id;
@@ -251,6 +252,7 @@ class _CourseSubjectLesson implements CourseSubjectLesson {
   return EqualUnmodifiableListView(value);
 }
 
+@override@JsonKey() final  bool wasAbsent;
 
 /// Create a copy of CourseSubjectLesson
 /// with the given fields replaced by the non-null parameter values.
@@ -265,16 +267,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CourseSubjectLesson&&(identical(other.id, id) || other.id == id)&&(identical(other.remoteId, remoteId) || other.remoteId == remoteId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.syncStatus, syncStatus) || other.syncStatus == syncStatus)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.courseSubjectId, courseSubjectId) || other.courseSubjectId == courseSubjectId)&&(identical(other.lessonDate, lessonDate) || other.lessonDate == lessonDate)&&(identical(other.lessonHours, lessonHours) || other.lessonHours == lessonHours)&&(identical(other.coveredContent, coveredContent) || other.coveredContent == coveredContent)&&(identical(other.description, description) || other.description == description)&&(identical(other.activityDescription, activityDescription) || other.activityDescription == activityDescription)&&(identical(other.assessmentDescription, assessmentDescription) || other.assessmentDescription == assessmentDescription)&&(identical(other.assessmentDate, assessmentDate) || other.assessmentDate == assessmentDate)&&(identical(other.pdfName, pdfName) || other.pdfName == pdfName)&&const DeepCollectionEquality().equals(other._pdfBytes, _pdfBytes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CourseSubjectLesson&&(identical(other.id, id) || other.id == id)&&(identical(other.remoteId, remoteId) || other.remoteId == remoteId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.syncStatus, syncStatus) || other.syncStatus == syncStatus)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.courseSubjectId, courseSubjectId) || other.courseSubjectId == courseSubjectId)&&(identical(other.lessonDate, lessonDate) || other.lessonDate == lessonDate)&&(identical(other.lessonHours, lessonHours) || other.lessonHours == lessonHours)&&(identical(other.coveredContent, coveredContent) || other.coveredContent == coveredContent)&&(identical(other.description, description) || other.description == description)&&(identical(other.activityDescription, activityDescription) || other.activityDescription == activityDescription)&&(identical(other.assessmentDescription, assessmentDescription) || other.assessmentDescription == assessmentDescription)&&(identical(other.assessmentDate, assessmentDate) || other.assessmentDate == assessmentDate)&&(identical(other.pdfName, pdfName) || other.pdfName == pdfName)&&const DeepCollectionEquality().equals(other._pdfBytes, _pdfBytes)&&(identical(other.wasAbsent, wasAbsent) || other.wasAbsent == wasAbsent));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,remoteId,createdAt,updatedAt,syncStatus,isDeleted,courseSubjectId,lessonDate,lessonHours,coveredContent,description,activityDescription,assessmentDescription,assessmentDate,pdfName,const DeepCollectionEquality().hash(_pdfBytes));
+int get hashCode => Object.hash(runtimeType,id,remoteId,createdAt,updatedAt,syncStatus,isDeleted,courseSubjectId,lessonDate,lessonHours,coveredContent,description,activityDescription,assessmentDescription,assessmentDate,pdfName,const DeepCollectionEquality().hash(_pdfBytes),wasAbsent);
 
 @override
 String toString() {
-  return 'CourseSubjectLesson(id: $id, remoteId: $remoteId, createdAt: $createdAt, updatedAt: $updatedAt, syncStatus: $syncStatus, isDeleted: $isDeleted, courseSubjectId: $courseSubjectId, lessonDate: $lessonDate, lessonHours: $lessonHours, coveredContent: $coveredContent, description: $description, activityDescription: $activityDescription, assessmentDescription: $assessmentDescription, assessmentDate: $assessmentDate, pdfName: $pdfName, pdfBytes: $pdfBytes)';
+  return 'CourseSubjectLesson(id: $id, remoteId: $remoteId, createdAt: $createdAt, updatedAt: $updatedAt, syncStatus: $syncStatus, isDeleted: $isDeleted, courseSubjectId: $courseSubjectId, lessonDate: $lessonDate, lessonHours: $lessonHours, coveredContent: $coveredContent, description: $description, activityDescription: $activityDescription, assessmentDescription: $assessmentDescription, assessmentDate: $assessmentDate, pdfName: $pdfName, pdfBytes: $pdfBytes, wasAbsent: $wasAbsent)';
 }
 
 
@@ -285,7 +287,7 @@ abstract mixin class _$CourseSubjectLessonCopyWith<$Res> implements $CourseSubje
   factory _$CourseSubjectLessonCopyWith(_CourseSubjectLesson value, $Res Function(_CourseSubjectLesson) _then) = __$CourseSubjectLessonCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? remoteId, DateTime createdAt, DateTime updatedAt, SyncStatus syncStatus, bool isDeleted, String courseSubjectId, DateTime lessonDate, double lessonHours, String coveredContent, String? description, String? activityDescription, String? assessmentDescription, DateTime? assessmentDate, String? pdfName, List<int>? pdfBytes
+ String id, String? remoteId, DateTime createdAt, DateTime updatedAt, SyncStatus syncStatus, bool isDeleted, String courseSubjectId, DateTime lessonDate, double lessonHours, String coveredContent, String? description, String? activityDescription, String? assessmentDescription, DateTime? assessmentDate, String? pdfName, List<int>? pdfBytes, bool wasAbsent
 });
 
 
@@ -302,7 +304,7 @@ class __$CourseSubjectLessonCopyWithImpl<$Res>
 
 /// Create a copy of CourseSubjectLesson
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? remoteId = freezed,Object? createdAt = null,Object? updatedAt = null,Object? syncStatus = null,Object? isDeleted = null,Object? courseSubjectId = null,Object? lessonDate = null,Object? lessonHours = null,Object? coveredContent = null,Object? description = freezed,Object? activityDescription = freezed,Object? assessmentDescription = freezed,Object? assessmentDate = freezed,Object? pdfName = freezed,Object? pdfBytes = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? remoteId = freezed,Object? createdAt = null,Object? updatedAt = null,Object? syncStatus = null,Object? isDeleted = null,Object? courseSubjectId = null,Object? lessonDate = null,Object? lessonHours = null,Object? coveredContent = null,Object? description = freezed,Object? activityDescription = freezed,Object? assessmentDescription = freezed,Object? assessmentDate = freezed,Object? pdfName = freezed,Object? pdfBytes = freezed,Object? wasAbsent = null,}) {
   return _then(_CourseSubjectLesson(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,remoteId: freezed == remoteId ? _self.remoteId : remoteId // ignore: cast_nullable_to_non_nullable
@@ -320,7 +322,8 @@ as String?,assessmentDescription: freezed == assessmentDescription ? _self.asses
 as String?,assessmentDate: freezed == assessmentDate ? _self.assessmentDate : assessmentDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,pdfName: freezed == pdfName ? _self.pdfName : pdfName // ignore: cast_nullable_to_non_nullable
 as String?,pdfBytes: freezed == pdfBytes ? _self._pdfBytes : pdfBytes // ignore: cast_nullable_to_non_nullable
-as List<int>?,
+as List<int>?,wasAbsent: null == wasAbsent ? _self.wasAbsent : wasAbsent // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

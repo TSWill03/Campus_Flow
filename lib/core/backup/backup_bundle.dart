@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../attachments/stored_attachment.dart';

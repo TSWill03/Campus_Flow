@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 class AttachmentOpenResult {
   const AttachmentOpenResult({
     required this.success,

@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../../core/sync/sync_status.dart';
@@ -24,6 +26,7 @@ abstract class CourseSubjectLesson with _$CourseSubjectLesson {
     DateTime? assessmentDate,
     String? pdfName,
     List<int>? pdfBytes,
+    @Default(false) bool wasAbsent,
   }) = _CourseSubjectLesson;
 
   factory CourseSubjectLesson.fromJson(Map<String, dynamic> json) =>

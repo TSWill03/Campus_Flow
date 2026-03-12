@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import '../entities/internship_record.dart';
 
 abstract interface class InternshipRepository {

@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'dashboard_summary.freezed.dart';

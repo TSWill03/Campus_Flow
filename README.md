@@ -1,3 +1,5 @@
+<!-- Signature: dev.tswicolly03 -->
+
 # CampusFlow
 
 CampusFlow e um gerenciador academico pessoal offline-first para estudantes universitarios. O app centraliza perfil academico, disciplinas, horas obrigatorias, organizacao de estudos e backup local em JSON, sem depender de backend no MVP.

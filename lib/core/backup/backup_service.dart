@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
@@ -464,6 +466,8 @@ class BackupService {
         workloadHours: Value(subject.workloadHours),
         electiveHours: Value(subject.electiveHours),
         suggestedSemester: Value(subject.suggestedSemester),
+        scheduledWeekday: Value(subject.scheduledWeekday),
+        defaultLessonHours: Value(subject.defaultLessonHours),
         type: Value(subject.type.name),
         status: Value(subject.status.name),
         notes: Value(subject.notes),
@@ -491,6 +495,7 @@ class BackupService {
         pdfBytes: Value(
           lesson.pdfBytes == null ? null : Uint8List.fromList(lesson.pdfBytes!),
         ),
+        wasAbsent: Value(lesson.wasAbsent),
       );
 
   AttachmentsCompanion _attachmentCompanion(StoredAttachment attachment) =>

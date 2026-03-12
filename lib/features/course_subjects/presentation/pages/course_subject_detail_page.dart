@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,7 @@ import '../../../../core/attachments/attachment_owner_type.dart';
 import '../../../../core/attachments/attachment_providers.dart';
 import '../../../../core/attachments/stored_attachment.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/weekday_labels.dart';
 import '../../../../shared/enums/app_enums.dart';
 import '../../../../shared/widgets/attachment_list_section.dart';
 import '../../../../shared/widgets/async_value_view.dart';
@@ -51,7 +54,7 @@ class _CourseSubjectDetailPageState
           _lessonAutoOpened = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
-              context.push('/subjects/${subject.id}/lessons/new');
+              context.push(_newLessonPath(subject));
             }
           });
         }
@@ -80,7 +83,7 @@ class _CourseSubjectDetailPageState
                       label: const Text('Editar disciplina'),
                     ),
                     FilledButton.icon(
-                      onPressed: () => context.push('/subjects/${subject.id}/lessons/new'),
+                      onPressed: () => context.push(_newLessonPath(subject)),
                       icon: const Icon(Icons.add_rounded),
                       label: const Text('Nova aula'),
                     ),
@@ -110,10 +113,23 @@ class _CourseSubjectDetailPageState
                         value: AppFormatters.formatLessonHours(
                           lessons.fold<double>(
                             0,
-                            (total, lesson) => total + lesson.lessonHours,
+                            (total, lesson) =>
+                                total + (lesson.wasAbsent ? 0 : lesson.lessonHours),
                           ),
                         ),
                       ),
+                      if (subject.scheduledWeekday != null)
+                        _SummaryTile(
+                          label: 'Dia fixo',
+                          value: WeekdayLabels.longLabel(subject.scheduledWeekday!)!,
+                        ),
+                      if (subject.defaultLessonHours != null)
+                        _SummaryTile(
+                          label: 'Duracao padrao',
+                          value: AppFormatters.formatLessonHours(
+                            subject.defaultLessonHours!,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -141,7 +157,7 @@ class _CourseSubjectDetailPageState
                   message:
                       'Assim que voce tiver uma aula, registre o conteudo e os materiais para montar um historico util da disciplina.',
                   action: FilledButton(
-                    onPressed: () => context.push('/subjects/${subject.id}/lessons/new'),
+                    onPressed: () => context.push(_newLessonPath(subject)),
                     child: const Text('Registrar primeira aula'),
                   ),
                 )
@@ -192,6 +208,13 @@ class _CourseSubjectDetailPageState
     }
 
     await ref.read(courseSubjectRepositoryProvider).deleteLesson(lessonId);
+  }
+
+  String _newLessonPath(CourseSubject subject) {
+    if (subject.defaultLessonHours == null) {
+      return '/subjects/${subject.id}/lessons/new';
+    }
+    return '/subjects/${subject.id}/lessons/new?lessonHours=${subject.defaultLessonHours}';
   }
 }
 
@@ -268,12 +291,21 @@ class _LessonCard extends ConsumerWidget {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 StatusChip(label: AppFormatters.formatDate(lesson.lessonDate)),
-                StatusChip(label: AppFormatters.formatLessonHours(lesson.lessonHours)),
+                if (!lesson.wasAbsent)
+                  StatusChip(label: AppFormatters.formatLessonHours(lesson.lessonHours)),
+                if (lesson.wasAbsent) const StatusChip(label: 'Falta registrada'),
                 if (resolvedAttachments.isNotEmpty)
                   StatusChip(label: '${resolvedAttachments.length} arquivo(s)'),
                 if (lesson.assessmentDate != null) StatusChip(label: 'Prova'),
               ],
             ),
+            if (lesson.wasAbsent) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Voce marcou falta nesta aula. Se quiser, depois pode editar esse registro.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
             if (lesson.description != null && lesson.description!.trim().isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(lesson.description!),

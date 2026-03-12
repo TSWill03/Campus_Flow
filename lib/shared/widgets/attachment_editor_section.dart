@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'dart:math' as math;
 import 'dart:typed_data';
 

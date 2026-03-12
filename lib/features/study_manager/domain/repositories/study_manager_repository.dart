@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import '../entities/study_session.dart';
 import '../entities/study_subject.dart';
 import '../entities/study_task.dart';

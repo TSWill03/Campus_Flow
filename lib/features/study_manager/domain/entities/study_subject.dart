@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../../core/sync/sync_status.dart';

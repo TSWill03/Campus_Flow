@@ -1,14 +1,19 @@
+// Signature: dev.tswicolly03
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/weekday_labels.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/empty_state_card.dart';
 import '../../../../shared/widgets/metric_card.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../academic_profile/presentation/providers/academic_profile_provider.dart';
+import '../../../course_subjects/presentation/providers/course_subject_automation_service.dart';
 import '../../domain/entities/attachment_deadline_reminder.dart';
+import '../../domain/entities/scheduled_subject_prompt.dart';
 import '../providers/dashboard_summary_provider.dart';
 
 class DashboardPage extends ConsumerWidget {
@@ -19,7 +24,10 @@ class DashboardPage extends ConsumerWidget {
     final profile = ref.watch(activeAcademicProfileProvider).valueOrNull;
     final summaryAsync = ref.watch(dashboardSummaryProvider);
     final remindersAsync = ref.watch(dashboardAttachmentRemindersProvider);
+    final scheduledSubjectsAsync = ref.watch(dashboardScheduledSubjectsProvider);
     final reminders = remindersAsync.valueOrNull ?? const <AttachmentDeadlineReminder>[];
+    final scheduledSubjects =
+        scheduledSubjectsAsync.valueOrNull ?? const <ScheduledSubjectPrompt>[];
 
     return AsyncValueView(
       value: summaryAsync,
@@ -182,6 +190,32 @@ class DashboardPage extends ConsumerWidget {
               ),
             const SizedBox(height: 24),
           ],
+          if (scheduledSubjectsAsync.isLoading || scheduledSubjects.isNotEmpty) ...[
+            const SectionHeader(
+              title: 'Aulas esperadas hoje',
+              subtitle:
+                  'Quando a disciplina tem dia fixo, o app lembra voce de registrar a aula ou marcar falta.',
+            ),
+            const SizedBox(height: 16),
+            if (scheduledSubjectsAsync.isLoading)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: LinearProgressIndicator(),
+                ),
+              )
+            else
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: scheduledSubjects
+                    .map(
+                      (subject) => _ScheduledSubjectPromptCard(subject: subject),
+                    )
+                    .toList(),
+              ),
+            const SizedBox(height: 24),
+          ],
           const SectionHeader(
             title: 'Acessos rapidos',
             subtitle: 'Entre direto nas areas mais usadas do planejamento academico.',
@@ -323,6 +357,94 @@ class _ReminderCard extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ScheduledSubjectPromptCard extends ConsumerWidget {
+  const _ScheduledSubjectPromptCard({required this.subject});
+
+  final ScheduledSubjectPrompt subject;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SizedBox(
+      width: 340,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                subject.subjectName,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                [
+                  'Hoje e ${WeekdayLabels.longLabel(subject.scheduledWeekday)}',
+                  if (subject.defaultLessonHours != null)
+                    'aula padrao de ${AppFormatters.formatLessonHours(subject.defaultLessonHours!)}',
+                ].join(' - '),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () => context.push(_newLessonPath(subject)),
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('Registrar aula'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => _markAbsent(context, ref),
+                    icon: const Icon(Icons.event_busy_rounded),
+                    label: const Text('Marcar falta'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _newLessonPath(ScheduledSubjectPrompt subject) {
+    final buffer = StringBuffer('/subjects/${subject.subjectId}/lessons/new');
+    final today = DateTime.now();
+    final query = <String>[
+      'lessonDate=${DateTime(today.year, today.month, today.day).toIso8601String()}',
+      if (subject.defaultLessonHours != null)
+        'lessonHours=${subject.defaultLessonHours}',
+    ];
+    if (query.isNotEmpty) {
+      buffer.write('?${query.join('&')}');
+    }
+    return buffer.toString();
+  }
+
+  Future<void> _markAbsent(BuildContext context, WidgetRef ref) async {
+    final created = await ref
+        .read(courseSubjectAutomationServiceProvider)
+        .markAbsentToday(
+          subjectId: subject.subjectId,
+          defaultLessonHours: subject.defaultLessonHours,
+        );
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          created
+              ? 'Falta registrada para ${subject.subjectName}.'
+              : 'Essa disciplina ja possui um registro para hoje.',
         ),
       ),
     );

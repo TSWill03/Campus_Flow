@@ -1,7 +1,11 @@
+// Signature: dev.tswicolly03
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/weekday_labels.dart';
 import '../../../academic_profile/presentation/providers/academic_profile_provider.dart';
 import '../../../../shared/enums/app_enums.dart';
 import '../../../../shared/widgets/async_value_view.dart';
@@ -132,6 +136,10 @@ class _CourseSubjectCard extends ConsumerWidget {
                         '${subject.electiveHours} h optativa',
                       if (subject.suggestedSemester != null)
                         '${subject.suggestedSemester}o periodo',
+                      if (subject.scheduledWeekday != null)
+                        'Toda ${WeekdayLabels.shortLabel(subject.scheduledWeekday)}',
+                      if (subject.defaultLessonHours != null)
+                        '${AppFormatters.formatLessonHours(subject.defaultLessonHours!)} por aula',
                     ].join(' - '),
                   ),
                   if (subject.notes != null && subject.notes!.trim().isNotEmpty) ...[

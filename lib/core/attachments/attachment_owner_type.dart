@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 enum AttachmentOwnerType {
   courseSubjectLesson,
   complementaryActivity,

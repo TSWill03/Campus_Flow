@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/entity_helpers.dart';
@@ -19,6 +21,8 @@ class CourseSubjectFormController extends AutoDisposeNotifier<FormSubmissionStat
     required int workloadHours,
     required int? electiveHours,
     required int? suggestedSemester,
+    required int? scheduledWeekday,
+    required double? defaultLessonHours,
     required CourseSubjectType type,
     required CourseSubjectStatus status,
     required String? notes,
@@ -40,6 +44,8 @@ class CourseSubjectFormController extends AutoDisposeNotifier<FormSubmissionStat
         workloadHours: workloadHours,
         electiveHours: electiveHours,
         suggestedSemester: suggestedSemester,
+        scheduledWeekday: scheduledWeekday,
+        defaultLessonHours: defaultLessonHours,
         type: type,
         status: status,
         notes: notes,

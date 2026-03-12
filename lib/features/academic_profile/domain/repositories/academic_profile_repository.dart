@@ -1,3 +1,5 @@
+// Signature: dev.tswicolly03
+
 import '../entities/academic_profile.dart';
 
 abstract interface class AcademicProfileRepository {
