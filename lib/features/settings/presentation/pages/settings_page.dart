@@ -9,6 +9,7 @@ import '../../../../core/theme/app_color_profile.dart';
 import '../../../../core/theme/color_profile_controller.dart';
 import '../../../../core/theme/theme_mode_controller.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../shared/enums/theme_preference.dart';
 import '../../../../shared/widgets/section_header.dart';
 
@@ -56,6 +57,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final syncOverview = ref.watch(syncQueueOverviewProvider);
     final syncDeviceId = ref.watch(syncDeviceIdProvider);
     final syncInfo = ref.watch(syncQueueServiceProvider);
+    final authState = ref.watch(authControllerProvider);
 
     if (!_colorProfileDirty &&
         _colorProfileNameController.text != colorProfile.name) {
@@ -70,6 +72,39 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               'Personalize o tema, gerencie backups locais e confira como a arquitetura foi preparada para evolucao futura.',
         ),
         const SizedBox(height: 24),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Seguranca da conta',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  authState.account == null
+                      ? 'Nenhuma conta local carregada.'
+                      : 'Sessao atual: ${authState.account!.displayName} (${authState.account!.email})',
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  authState.account?.isGoogleLinked == true
+                      ? 'Google vinculado a esta conta.'
+                      : 'Google ainda nao vinculado a esta conta.',
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: _signOut,
+                  icon: const Icon(Icons.logout_rounded),
+                  label: const Text('Sair e bloquear app'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -474,6 +509,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 : _colorProfileNameController.text.trim(),
           ),
         );
+  }
+
+  Future<void> _signOut() async {
+    await ref.read(authControllerProvider.notifier).signOut();
   }
 }
 

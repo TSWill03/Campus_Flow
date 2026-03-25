@@ -16,6 +16,8 @@ import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/empty_state_card.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/status_chip.dart';
+import '../../../academic_profile/domain/entities/academic_profile.dart';
+import '../../../academic_profile/presentation/providers/academic_profile_provider.dart';
 import '../../domain/entities/course_subject.dart';
 import '../../domain/entities/course_subject_lesson.dart';
 import '../providers/course_subjects_provider.dart';
@@ -49,6 +51,30 @@ class _CourseSubjectDetailPageState
         if (subject == null) {
           return const Center(child: Text('Disciplina nao encontrada.'));
         }
+        final allSubjects =
+            ref.watch(allCourseSubjectsProvider).valueOrNull ??
+            const <CourseSubject>[];
+        final profiles =
+            ref.watch(academicProfilesProvider).valueOrNull ??
+            const <AcademicProfile>[];
+        String? sourceSubjectName;
+        if (subject.creditSourceSubjectId != null) {
+          for (final item in allSubjects) {
+            if (item.id == subject.creditSourceSubjectId) {
+              sourceSubjectName = item.name;
+              break;
+            }
+          }
+        }
+        String? sourceProfileName;
+        if (subject.creditSourceProfileId != null) {
+          for (final item in profiles) {
+            if (item.id == subject.creditSourceProfileId) {
+              sourceProfileName = item.profileName;
+              break;
+            }
+          }
+        }
 
         if (widget.startLessonOnOpen && !_lessonAutoOpened) {
           _lessonAutoOpened = true;
@@ -59,7 +85,9 @@ class _CourseSubjectDetailPageState
           });
         }
 
-        final lessonsAsync = ref.watch(courseSubjectLessonsProvider(subject.id));
+        final lessonsAsync = ref.watch(
+          courseSubjectLessonsProvider(subject.id),
+        );
         return AsyncValueView<List<CourseSubjectLesson>>(
           value: lessonsAsync,
           data: (lessons) => ListView(
@@ -78,7 +106,8 @@ class _CourseSubjectDetailPageState
                       label: const Text('Voltar'),
                     ),
                     OutlinedButton.icon(
-                      onPressed: () => context.push('/subjects/${subject.id}/edit'),
+                      onPressed: () =>
+                          context.push('/subjects/${subject.id}/edit'),
                       icon: const Icon(Icons.edit_rounded),
                       label: const Text('Editar disciplina'),
                     ),
@@ -98,7 +127,10 @@ class _CourseSubjectDetailPageState
                     spacing: 16,
                     runSpacing: 16,
                     children: [
-                      _SummaryTile(label: 'Status', value: subject.status.label),
+                      _SummaryTile(
+                        label: 'Status',
+                        value: subject.status.label,
+                      ),
                       _SummaryTile(label: 'Tipo', value: subject.type.label),
                       _SummaryTile(
                         label: 'Carga total',
@@ -114,14 +146,17 @@ class _CourseSubjectDetailPageState
                           lessons.fold<double>(
                             0,
                             (total, lesson) =>
-                                total + (lesson.wasAbsent ? 0 : lesson.lessonHours),
+                                total +
+                                (lesson.wasAbsent ? 0 : lesson.lessonHours),
                           ),
                         ),
                       ),
                       if (subject.scheduledWeekday != null)
                         _SummaryTile(
                           label: 'Dia fixo',
-                          value: WeekdayLabels.longLabel(subject.scheduledWeekday!)!,
+                          value: WeekdayLabels.longLabel(
+                            subject.scheduledWeekday!,
+                          )!,
                         ),
                       if (subject.defaultLessonHours != null)
                         _SummaryTile(
@@ -134,12 +169,84 @@ class _CourseSubjectDetailPageState
                   ),
                 ),
               ),
-              if (subject.notes != null && subject.notes!.trim().isNotEmpty) ...[
+              if (subject.creditStatus != CourseSubjectCreditStatus.none) ...[
+                const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              'Aproveitamento',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            StatusChip(
+                              label: subject.creditStatus.label,
+                              color: _creditStatusColor(subject.creditStatus),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          [
+                            if (sourceSubjectName != null)
+                              'Disciplina de origem: $sourceSubjectName',
+                            if (sourceProfileName != null)
+                              'Perfil de origem: $sourceProfileName',
+                            if (subject.creditMatchScore != null)
+                              'Compatibilidade ${(subject.creditMatchScore! * 100).round()}%',
+                          ].join('\n'),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(switch (subject.creditStatus) {
+                          CourseSubjectCreditStatus.suggested =>
+                            'O sistema encontrou uma equivalencia forte com outra disciplina. Vale revisar os documentos antes de solicitar.',
+                          CourseSubjectCreditStatus.requested =>
+                            'Essa disciplina ja esta marcada como aproveitamento solicitado, com origem registrada para acompanhamento.',
+                          CourseSubjectCreditStatus.approved =>
+                            'O aproveitamento desta disciplina foi aprovado e permanece vinculado ao historico de origem.',
+                          CourseSubjectCreditStatus.rejected =>
+                            'Esse aproveitamento foi negado. Voce pode manter o vinculo como historico ou limpar a referencia na edicao.',
+                          CourseSubjectCreditStatus.none => '',
+                        }, style: Theme.of(context).textTheme.bodyMedium),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              if (subject.notes != null &&
+                  subject.notes!.trim().isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Text(subject.notes!),
+                  ),
+                ),
+              ],
+              if (subject.syllabus != null &&
+                  subject.syllabus!.trim().isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ementa',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(subject.syllabus!),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -181,8 +288,12 @@ class _CourseSubjectDetailPageState
     );
   }
 
-  Future<void> _confirmDeleteLesson(BuildContext context, String lessonId) async {
-    final confirmed = await showDialog<bool>(
+  Future<void> _confirmDeleteLesson(
+    BuildContext context,
+    String lessonId,
+  ) async {
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Remover aula?'),
@@ -216,13 +327,20 @@ class _CourseSubjectDetailPageState
     }
     return '/subjects/${subject.id}/lessons/new?lessonHours=${subject.defaultLessonHours}';
   }
+
+  Color _creditStatusColor(CourseSubjectCreditStatus status) {
+    return switch (status) {
+      CourseSubjectCreditStatus.none => const Color(0xFF6B7280),
+      CourseSubjectCreditStatus.suggested => const Color(0xFF2563EB),
+      CourseSubjectCreditStatus.requested => const Color(0xFF7C3AED),
+      CourseSubjectCreditStatus.approved => const Color(0xFF2E7D32),
+      CourseSubjectCreditStatus.rejected => const Color(0xFFC62828),
+    };
+  }
 }
 
 class _SummaryTile extends StatelessWidget {
-  const _SummaryTile({
-    required this.label,
-    required this.value,
-  });
+  const _SummaryTile({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -262,18 +380,15 @@ class _LessonCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final attachmentsAsync = ref.watch(
-      ownerAttachmentsProvider(
-        (
-          ownerType: AttachmentOwnerType.courseSubjectLesson,
-          ownerId: lesson.id,
-        ),
-      ),
+      ownerAttachmentsProvider((
+        ownerType: AttachmentOwnerType.courseSubjectLesson,
+        ownerId: lesson.id,
+      )),
     );
     final attachments = attachmentsAsync.valueOrNull;
-    final resolvedAttachments =
-        attachments != null && attachments.isNotEmpty
-            ? attachments
-            : _legacyAttachments();
+    final resolvedAttachments = attachments != null && attachments.isNotEmpty
+        ? attachments
+        : _legacyAttachments();
 
     return Card(
       child: Padding(
@@ -292,8 +407,11 @@ class _LessonCard extends ConsumerWidget {
                 ),
                 StatusChip(label: AppFormatters.formatDate(lesson.lessonDate)),
                 if (!lesson.wasAbsent)
-                  StatusChip(label: AppFormatters.formatLessonHours(lesson.lessonHours)),
-                if (lesson.wasAbsent) const StatusChip(label: 'Falta registrada'),
+                  StatusChip(
+                    label: AppFormatters.formatLessonHours(lesson.lessonHours),
+                  ),
+                if (lesson.wasAbsent)
+                  const StatusChip(label: 'Falta registrada'),
                 if (resolvedAttachments.isNotEmpty)
                   StatusChip(label: '${resolvedAttachments.length} arquivo(s)'),
                 if (lesson.assessmentDate != null) StatusChip(label: 'Prova'),
@@ -306,7 +424,8 @@ class _LessonCard extends ConsumerWidget {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
-            if (lesson.description != null && lesson.description!.trim().isNotEmpty) ...[
+            if (lesson.description != null &&
+                lesson.description!.trim().isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(lesson.description!),
             ],
@@ -343,7 +462,9 @@ class _LessonCard extends ConsumerWidget {
                 attachments: resolvedAttachments,
                 emptyMessage: 'Nenhum arquivo anexado.',
                 onToggleCompleted: (attachment, isCompleted) async {
-                  await ref.read(attachmentRepositoryProvider).updateCompletionStatus(
+                  await ref
+                      .read(attachmentRepositoryProvider)
+                      .updateCompletionStatus(
                         attachmentId: attachment.id,
                         isCompleted: isCompleted,
                       );

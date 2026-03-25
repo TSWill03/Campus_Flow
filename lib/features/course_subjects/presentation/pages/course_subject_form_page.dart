@@ -14,10 +14,7 @@ import '../providers/course_subject_form_controller.dart';
 import '../providers/course_subjects_provider.dart';
 
 class CourseSubjectFormPage extends ConsumerWidget {
-  const CourseSubjectFormPage({
-    super.key,
-    this.subjectId,
-  });
+  const CourseSubjectFormPage({super.key, this.subjectId});
 
   final String? subjectId;
 
@@ -52,7 +49,9 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
   late final TextEditingController _electiveHoursController;
   late final TextEditingController _semesterController;
   late final TextEditingController _defaultLessonHoursController;
+  late final TextEditingController _syllabusController;
   late final TextEditingController _notesController;
+  late List<String> _selectedPrerequisiteSubjectIds;
   String? _selectedAcademicProfileId;
   int? _selectedScheduledWeekday;
   late CourseSubjectType _selectedType;
@@ -76,7 +75,9 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
     _defaultLessonHoursController = TextEditingController(
       text: subject?.defaultLessonHours?.toString().replaceAll('.', ',') ?? '',
     );
+    _syllabusController = TextEditingController(text: subject?.syllabus ?? '');
     _notesController = TextEditingController(text: subject?.notes ?? '');
+    _selectedPrerequisiteSubjectIds = [...?subject?.prerequisiteSubjectIds];
     _selectedAcademicProfileId = subject?.academicProfileId;
     _selectedScheduledWeekday = subject?.scheduledWeekday;
     _selectedType = subject?.type ?? CourseSubjectType.mandatory;
@@ -91,6 +92,7 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
     _electiveHoursController.dispose();
     _semesterController.dispose();
     _defaultLessonHoursController.dispose();
+    _syllabusController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -98,34 +100,49 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
   @override
   Widget build(BuildContext context) {
     final submissionState = ref.watch(courseSubjectFormControllerProvider);
-    ref.listen<FormSubmissionState>(
-      courseSubjectFormControllerProvider,
-      (previous, next) {
-        if (!mounted || previous?.status == next.status) {
-          return;
-        }
+    ref.listen<FormSubmissionState>(courseSubjectFormControllerProvider, (
+      previous,
+      next,
+    ) {
+      if (!mounted || previous?.status == next.status) {
+        return;
+      }
 
-        if (next.isError && next.message != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(next.message!)),
-          );
-        }
-      },
-    );
+      if (next.isError && next.message != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.message!)));
+      }
+    });
 
     final profiles =
-        ref.watch(academicProfilesProvider).valueOrNull ?? const <AcademicProfile>[];
+        ref.watch(academicProfilesProvider).valueOrNull ??
+        const <AcademicProfile>[];
     if (_selectedAcademicProfileId == null && profiles.isNotEmpty) {
       _selectedAcademicProfileId =
           widget.initialSubject?.academicProfileId ??
-              ref.read(activeAcademicProfileProvider).valueOrNull?.id ??
-              profiles.first.id;
+          ref.read(activeAcademicProfileProvider).valueOrNull?.id ??
+          profiles.first.id;
     }
+    final profileSubjects =
+        ref
+            .watch(
+              courseSubjectsByAcademicProfileProvider(
+                _selectedAcademicProfileId,
+              ),
+            )
+            .valueOrNull ??
+        const <CourseSubject>[];
+    final availablePrerequisiteSubjects = profileSubjects
+        .where((subject) => subject.id != widget.initialSubject?.id)
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.initialSubject == null ? 'Nova disciplina' : 'Editar disciplina',
+          widget.initialSubject == null
+              ? 'Nova disciplina'
+              : 'Editar disciplina',
         ),
       ),
       body: SafeArea(
@@ -167,7 +184,11 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
                                 )
                                 .toList(),
                             onChanged: (value) {
-                              setState(() => _selectedAcademicProfileId = value);
+                              setState(() {
+                                _selectedAcademicProfileId = value;
+                                _selectedPrerequisiteSubjectIds =
+                                    const <String>[];
+                              });
                             },
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -179,22 +200,25 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _nameController,
-                          decoration:
-                              const InputDecoration(labelText: 'Nome da disciplina'),
+                          decoration: const InputDecoration(
+                            labelText: 'Nome da disciplina',
+                          ),
                           validator: _required,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _codeController,
-                          decoration:
-                              const InputDecoration(labelText: 'Codigo (opcional)'),
+                          decoration: const InputDecoration(
+                            labelText: 'Codigo (opcional)',
+                          ),
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _workloadController,
                           keyboardType: TextInputType.number,
-                          decoration:
-                              const InputDecoration(labelText: 'Carga horaria'),
+                          decoration: const InputDecoration(
+                            labelText: 'Carga horaria',
+                          ),
                           validator: _numberRequired,
                         ),
                         const SizedBox(height: 16),
@@ -202,7 +226,8 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
                           controller: _electiveHoursController,
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
-                            labelText: 'Horas optativas contabilizadas (opcional)',
+                            labelText:
+                                'Horas optativas contabilizadas (opcional)',
                           ),
                           validator: _optionalNumber,
                         ),
@@ -214,6 +239,16 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
                             labelText: 'Periodo sugerido (opcional)',
                           ),
                           validator: _optionalNumber,
+                        ),
+                        const SizedBox(height: 16),
+                        _PrerequisiteSelector(
+                          availableSubjects: availablePrerequisiteSubjects,
+                          selectedIds: _selectedPrerequisiteSubjectIds,
+                          onPressed: profiles.isEmpty
+                              ? null
+                              : () => _pickPrerequisites(
+                                  availablePrerequisiteSubjects,
+                                ),
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<int>(
@@ -243,8 +278,9 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _defaultLessonHoursController,
-                          keyboardType:
-                              const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           decoration: const InputDecoration(
                             labelText: 'Duracao padrao por aula (opcional)',
                             hintText: 'Ex.: 2 ou 1,5',
@@ -254,8 +290,9 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
                         const SizedBox(height: 16),
                         DropdownButtonFormField<CourseSubjectType>(
                           initialValue: _selectedType,
-                          decoration:
-                              const InputDecoration(labelText: 'Tipo da disciplina'),
+                          decoration: const InputDecoration(
+                            labelText: 'Tipo da disciplina',
+                          ),
                           items: CourseSubjectType.values
                               .map(
                                 (type) => DropdownMenuItem(
@@ -273,7 +310,9 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
                         const SizedBox(height: 16),
                         DropdownButtonFormField<CourseSubjectStatus>(
                           initialValue: _selectedStatus,
-                          decoration: const InputDecoration(labelText: 'Status'),
+                          decoration: const InputDecoration(
+                            labelText: 'Status',
+                          ),
                           items: CourseSubjectStatus.values
                               .map(
                                 (status) => DropdownMenuItem(
@@ -290,22 +329,37 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
+                          controller: _syllabusController,
+                          minLines: 4,
+                          maxLines: 7,
+                          decoration: const InputDecoration(
+                            labelText: 'Ementa (opcional)',
+                            helperText:
+                                'Use este campo para guardar os conteudos oficiais da disciplina e facilitar o aproveitamento entre cursos.',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
                           controller: _notesController,
                           minLines: 3,
                           maxLines: 5,
-                          decoration:
-                              const InputDecoration(labelText: 'Observacoes'),
+                          decoration: const InputDecoration(
+                            labelText: 'Observacoes',
+                          ),
                         ),
                         const SizedBox(height: 24),
                         FilledButton.icon(
-                          onPressed: submissionState.isLoading || profiles.isEmpty
+                          onPressed:
+                              submissionState.isLoading || profiles.isEmpty
                               ? null
                               : _save,
                           icon: submissionState.isLoading
                               ? const SizedBox(
                                   height: 18,
                                   width: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : const Icon(Icons.save_rounded),
                           label: const Text('Salvar disciplina'),
@@ -373,13 +427,15 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
       return;
     }
 
-    final savedSubject =
-        await ref.read(courseSubjectFormControllerProvider.notifier).submit(
+    final savedSubject = await ref
+        .read(courseSubjectFormControllerProvider.notifier)
+        .submit(
           current: widget.initialSubject,
           academicProfileId: _selectedAcademicProfileId!,
           name: _nameController.text.trim(),
-          code:
-              _codeController.text.trim().isEmpty ? null : _codeController.text.trim(),
+          code: _codeController.text.trim().isEmpty
+              ? null
+              : _codeController.text.trim(),
           workloadHours: int.parse(_workloadController.text),
           electiveHours: _electiveHoursController.text.trim().isEmpty
               ? null
@@ -387,14 +443,19 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
           suggestedSemester: _semesterController.text.trim().isEmpty
               ? null
               : int.parse(_semesterController.text),
+          prerequisiteSubjectIds: _selectedPrerequisiteSubjectIds,
           scheduledWeekday: _selectedScheduledWeekday,
           defaultLessonHours: _defaultLessonHoursController.text.trim().isEmpty
               ? null
               : _parseHours(_defaultLessonHoursController.text),
           type: _selectedType,
           status: _selectedStatus,
-          notes:
-              _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+          syllabus: _syllabusController.text.trim().isEmpty
+              ? null
+              : _syllabusController.text.trim(),
+          notes: _notesController.text.trim().isEmpty
+              ? null
+              : _notesController.text.trim(),
         );
 
     if (!mounted || savedSubject == null) {
@@ -429,5 +490,154 @@ class _CourseSubjectFormState extends ConsumerState<_CourseSubjectForm> {
       6: 'Sabado',
       7: 'Domingo',
     }[weekday]!;
+  }
+
+  Future<void> _pickPrerequisites(List<CourseSubject> availableSubjects) async {
+    if (availableSubjects.isEmpty) {
+      _showMessage(
+        'Cadastre outras disciplinas neste perfil para usar como pre-requisito.',
+      );
+      return;
+    }
+
+    final initialSelection = {..._selectedPrerequisiteSubjectIds};
+    final selectedIds = await showDialog<Set<String>>(
+      context: context,
+      builder: (context) {
+        final tempSelection = {...initialSelection};
+        return StatefulBuilder(
+          builder: (context, setModalState) => AlertDialog(
+            title: const Text('Selecionar pre-requisitos'),
+            content: SizedBox(
+              width: 420,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: availableSubjects
+                      .map(
+                        (subject) => CheckboxListTile(
+                          value: tempSelection.contains(subject.id),
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(subject.name),
+                          subtitle: Text(
+                            [
+                              if (subject.code != null &&
+                                  subject.code!.isNotEmpty)
+                                subject.code!,
+                              if (subject.suggestedSemester != null)
+                                '${subject.suggestedSemester}o periodo',
+                            ].join(' - '),
+                          ),
+                          onChanged: (checked) {
+                            setModalState(() {
+                              if (checked == true) {
+                                tempSelection.add(subject.id);
+                              } else {
+                                tempSelection.remove(subject.id);
+                              }
+                            });
+                          },
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(<String>{}),
+                child: const Text('Limpar'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(tempSelection),
+                child: const Text('Aplicar'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selectedIds == null) {
+      return;
+    }
+
+    setState(() {
+      _selectedPrerequisiteSubjectIds = selectedIds.toList();
+    });
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _PrerequisiteSelector extends StatelessWidget {
+  const _PrerequisiteSelector({
+    required this.availableSubjects,
+    required this.selectedIds,
+    required this.onPressed,
+  });
+
+  final List<CourseSubject> availableSubjects;
+  final List<String> selectedIds;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedSubjects = availableSubjects
+        .where((subject) => selectedIds.contains(subject.id))
+        .toList();
+
+    return InputDecorator(
+      decoration: const InputDecoration(
+        labelText: 'Pre-requisitos (opcional)',
+        helperText:
+            'Selecione disciplinas que precisam estar cursadas antes desta.',
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          OutlinedButton.icon(
+            onPressed: onPressed,
+            icon: const Icon(Icons.account_tree_outlined),
+            label: Text(
+              selectedSubjects.isEmpty
+                  ? 'Selecionar pre-requisitos'
+                  : 'Editar pre-requisitos',
+            ),
+          ),
+          if (selectedSubjects.isEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              availableSubjects.isEmpty
+                  ? 'Nenhuma outra disciplina disponivel neste perfil ainda.'
+                  : 'Nenhum pre-requisito selecionado.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ] else ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: selectedSubjects
+                  .map(
+                    (subject) => Chip(
+                      avatar: const Icon(Icons.link_rounded, size: 18),
+                      label: Text(subject.name),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }

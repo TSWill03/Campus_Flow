@@ -41,6 +41,25 @@ extension CourseSubjectStatusX on CourseSubjectStatus {
 }
 
 @JsonEnum(fieldRename: FieldRename.snake)
+enum CourseSubjectCreditStatus {
+  none,
+  suggested,
+  requested,
+  approved,
+  rejected,
+}
+
+extension CourseSubjectCreditStatusX on CourseSubjectCreditStatus {
+  String get label => switch (this) {
+        CourseSubjectCreditStatus.none => 'Sem aproveitamento',
+        CourseSubjectCreditStatus.suggested => 'Sugestao encontrada',
+        CourseSubjectCreditStatus.requested => 'Aproveitamento solicitado',
+        CourseSubjectCreditStatus.approved => 'Aproveitamento aprovado',
+        CourseSubjectCreditStatus.rejected => 'Aproveitamento negado',
+      };
+}
+
+@JsonEnum(fieldRename: FieldRename.snake)
 enum ValidationStatus {
   pending,
   submitted,

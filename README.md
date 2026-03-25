@@ -16,6 +16,9 @@ CampusFlow e um gerenciador academico pessoal offline-first para estudantes univ
 - `uuid`
 - `file_picker`
 - `shared_preferences`
+- `flutter_secure_storage`
+- `cryptography`
+- `google_sign_in`
 
 ### Observacao sobre escolhas
 
@@ -41,6 +44,9 @@ CampusFlow e um gerenciador academico pessoal offline-first para estudantes univ
 - Restore point automatico antes de importacoes destrutivas
 - Perfil de cores personalizado do usuario
 - Tema claro, escuro e seguir sistema
+- Login local seguro com email e senha
+- Codigo de recuperacao local para redefinir senha sem backend
+- Vinculo opcional com Google quando a plataforma e a configuracao OAuth permitirem
 
 ## Arquitetura
 
@@ -106,6 +112,24 @@ lib/
 ## Offline-first e persistencia local
 
 Todos os dados do MVP sao persistidos localmente em SQLite via Drift.
+
+## Autenticacao local segura
+
+O app agora possui uma camada de autenticacao local desacoplada do banco academico:
+
+- a senha nao fica em texto puro; ela e derivada com PBKDF2 (`cryptography`) e guardada apenas como hash
+- os artefatos de autenticacao e a sessao local ficam em armazenamento seguro do dispositivo com `flutter_secure_storage`
+- ao criar a conta, o app gera um codigo de recuperacao local
+- o fluxo `Esqueceu sua senha?` redefine a senha com esse codigo ou com a conta Google vinculada, quando disponivel
+
+### Google
+
+O login com Google foi preparado como metodo complementar de acesso:
+
+- Android, iOS, macOS e Web: suportados pelo fluxo atual
+- Windows: o botao fica desabilitado nesta etapa e o login local continua sendo o caminho oficial
+
+Na Web, e necessario fornecer `GOOGLE_WEB_CLIENT_ID` para ativar o fluxo. Em plataformas nativas suportadas, o projeto tambem precisa da configuracao OAuth correspondente do Google.
 
 As tabelas foram desenhadas com metadados para sincronizacao futura:
 

@@ -1,25 +1,9 @@
 // Signature: dev.tswicolly03
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-class SplashPage extends StatefulWidget {
+class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
-
-  @override
-  State<SplashPage> createState() => _SplashPageState();
-}
-
-class _SplashPageState extends State<SplashPage> {
-  @override
-  void initState() {
-    super.initState();
-    Future<void>.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) {
-        context.go('/dashboard');
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +40,7 @@ class _SplashPageState extends State<SplashPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Organizacao academica offline-first',
+                'Protegendo seu espaco academico',
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
                 ),

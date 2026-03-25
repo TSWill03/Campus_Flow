@@ -23,10 +23,17 @@ abstract class CourseSubject with _$CourseSubject {
     required int workloadHours,
     int? electiveHours,
     int? suggestedSemester,
+    @Default(<String>[]) List<String> prerequisiteSubjectIds,
     int? scheduledWeekday,
     double? defaultLessonHours,
     required CourseSubjectType type,
     required CourseSubjectStatus status,
+    String? creditSourceSubjectId,
+    String? creditSourceProfileId,
+    @Default(CourseSubjectCreditStatus.none)
+    CourseSubjectCreditStatus creditStatus,
+    double? creditMatchScore,
+    String? syllabus,
     String? notes,
   }) = _CourseSubject;
 

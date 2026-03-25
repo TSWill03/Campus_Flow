@@ -15,29 +15,43 @@ class DriftDashboardRepository {
   Stream<DashboardSummary> watchSummary({String? academicProfileId}) {
     final filteredProfileId =
         academicProfileId != null && academicProfileId.isNotEmpty
-            ? academicProfileId
-            : null;
-    final profileFilter =
-        filteredProfileId != null ? ' AND academic_profile_id = ?1' : '';
-    final variables = filteredProfileId != null
-        ? [Variable<String>(filteredProfileId)]
-        : const <Variable<Object>>[];
-    final requirementsProjection = filteredProfileId != null
-        ? '''
+        ? academicProfileId
+        : null;
+    if (filteredProfileId == null) {
+      return _database
+          .customSelect(
+            '''
+            SELECT
+              0 AS total_subjects,
+              0 AS completed_subjects,
+              0 AS completed_complementary_hours,
+              0 AS completed_internship_hours,
+              0 AS completed_extension_hours,
+              (SELECT COUNT(*) FROM study_sessions WHERE is_deleted = 0) AS total_study_sessions,
+              (SELECT COALESCE(SUM(duration_minutes), 0) FROM study_sessions WHERE is_deleted = 0)
+                AS total_study_minutes,
+              0 AS required_complementary_hours,
+              0 AS required_internship_hours,
+              0 AS required_extension_hours
+            ''',
+            readsFrom: {_database.studySessions},
+          )
+          .watchSingle()
+          .map(_mapSummary);
+    }
+    const profileFilter = ' AND academic_profile_id = ?1';
+    final variables = [Variable<String>(filteredProfileId)];
+    const requirementsProjection = '''
           (SELECT COALESCE(required_complementary_hours, 0) FROM academic_profiles WHERE id = ?1 LIMIT 1)
             AS required_complementary_hours,
           (SELECT COALESCE(required_internship_hours, 0) FROM academic_profiles WHERE id = ?1 LIMIT 1)
             AS required_internship_hours,
           (SELECT COALESCE(required_extension_hours, 0) FROM academic_profiles WHERE id = ?1 LIMIT 1)
             AS required_extension_hours
-        '''
-        : '''
-          0 AS required_complementary_hours,
-          0 AS required_internship_hours,
-          0 AS required_extension_hours
         ''';
 
-    final query = '''
+    final query =
+        '''
       SELECT
         (SELECT COUNT(*) FROM course_subjects WHERE is_deleted = 0$profileFilter) AS total_subjects,
         (SELECT COUNT(*) FROM course_subjects WHERE is_deleted = 0 AND status = 'completed'$profileFilter)
@@ -79,10 +93,11 @@ class DriftDashboardRepository {
   }) {
     final filteredProfileId =
         academicProfileId != null && academicProfileId.isNotEmpty
-            ? academicProfileId
-            : null;
-    final profileFilter =
-        filteredProfileId != null ? ' AND s.academic_profile_id = ?1' : '';
+        ? academicProfileId
+        : null;
+    final profileFilter = filteredProfileId != null
+        ? ' AND s.academic_profile_id = ?1'
+        : '';
     final variables = filteredProfileId != null
         ? [Variable<String>(filteredProfileId)]
         : const <Variable<Object>>[];
@@ -144,10 +159,11 @@ class DriftDashboardRepository {
     final endOfDay = startOfDay.add(const Duration(days: 1));
     final filteredProfileId =
         academicProfileId != null && academicProfileId.isNotEmpty
-            ? academicProfileId
-            : null;
-    final profileFilter =
-        filteredProfileId != null ? ' AND s.academic_profile_id = ?4' : '';
+        ? academicProfileId
+        : null;
+    final profileFilter = filteredProfileId != null
+        ? ' AND s.academic_profile_id = ?4'
+        : '';
     final variables = <Variable<Object>>[
       Variable<int>(now.weekday),
       Variable<DateTime>(startOfDay),
@@ -178,10 +194,7 @@ class DriftDashboardRepository {
           ORDER BY s.name ASC
           ''',
           variables: variables,
-          readsFrom: {
-            _database.courseSubjects,
-            _database.courseSubjectLessons,
-          },
+          readsFrom: {_database.courseSubjects, _database.courseSubjectLessons},
         )
         .watch()
         .map(
@@ -202,12 +215,16 @@ class DriftDashboardRepository {
     final totalSubjects = row.read<int>('total_subjects');
     final completedSubjects = row.read<int>('completed_subjects');
     final pendingSubjects = totalSubjects - completedSubjects;
-    final completedComplementaryHours =
-        row.read<int>('completed_complementary_hours');
-    final completedInternshipHours = row.read<int>('completed_internship_hours');
+    final completedComplementaryHours = row.read<int>(
+      'completed_complementary_hours',
+    );
+    final completedInternshipHours = row.read<int>(
+      'completed_internship_hours',
+    );
     final completedExtensionHours = row.read<int>('completed_extension_hours');
-    final requiredComplementaryHours =
-        row.read<int>('required_complementary_hours');
+    final requiredComplementaryHours = row.read<int>(
+      'required_complementary_hours',
+    );
     final requiredInternshipHours = row.read<int>('required_internship_hours');
     final requiredExtensionHours = row.read<int>('required_extension_hours');
 
@@ -219,14 +236,20 @@ class DriftDashboardRepository {
       completedSubjects: completedSubjects,
       pendingSubjects: pendingSubjects < 0 ? 0 : pendingSubjects,
       completedComplementaryHours: completedComplementaryHours,
-      remainingComplementaryHours:
-          _remaining(requiredComplementaryHours, completedComplementaryHours),
+      remainingComplementaryHours: _remaining(
+        requiredComplementaryHours,
+        completedComplementaryHours,
+      ),
       completedInternshipHours: completedInternshipHours,
-      remainingInternshipHours:
-          _remaining(requiredInternshipHours, completedInternshipHours),
+      remainingInternshipHours: _remaining(
+        requiredInternshipHours,
+        completedInternshipHours,
+      ),
       completedExtensionHours: completedExtensionHours,
-      remainingExtensionHours:
-          _remaining(requiredExtensionHours, completedExtensionHours),
+      remainingExtensionHours: _remaining(
+        requiredExtensionHours,
+        completedExtensionHours,
+      ),
       totalStudySessions: row.read<int>('total_study_sessions'),
       totalStudyMinutes: row.read<int>('total_study_minutes'),
     );

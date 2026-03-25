@@ -16,17 +16,21 @@ final internshipRepositoryProvider = Provider<InternshipRepository>(
   ),
 );
 
-final internshipsProvider = StreamProvider<List<InternshipRecord>>(
-  (ref) {
-    final activeProfileId =
-        ref.watch(activeAcademicProfileProvider).valueOrNull?.id;
-    return ref
-        .watch(internshipRepositoryProvider)
-        .watchInternships(academicProfileId: activeProfileId);
+final internshipsProvider = StreamProvider<List<InternshipRecord>>((ref) {
+  final activeProfileId = ref
+      .watch(activeAcademicProfileProvider)
+      .valueOrNull
+      ?.id;
+  if (activeProfileId == null || activeProfileId.isEmpty) {
+    return Stream.value(const <InternshipRecord>[]);
+  }
+  return ref
+      .watch(internshipRepositoryProvider)
+      .watchInternships(academicProfileId: activeProfileId);
+});
+
+final internshipByIdProvider = FutureProvider.family<InternshipRecord?, String>(
+  (ref, id) {
+    return ref.watch(internshipRepositoryProvider).findById(id);
   },
 );
-
-final internshipByIdProvider =
-    FutureProvider.family<InternshipRecord?, String>((ref, id) {
-  return ref.watch(internshipRepositoryProvider).findById(id);
-});

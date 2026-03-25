@@ -1,5 +1,7 @@
 // Signature: dev.tswicolly03
 
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../../../../core/database/app_database.dart';
@@ -20,18 +22,18 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
   Future<void> deleteSubject(String id) async {
     final now = DateTime.now();
     await _database.transaction(() async {
-      await (_database.update(_database.courseSubjects)
-            ..where((table) => table.id.equals(id)))
-          .write(
+      await (_database.update(
+        _database.courseSubjects,
+      )..where((table) => table.id.equals(id))).write(
         CourseSubjectsCompanion(
           isDeleted: const Value(true),
           updatedAt: Value(now),
           syncStatus: Value(SyncStatus.pendingDelete.name),
         ),
       );
-      await (_database.update(_database.courseSubjectLessons)
-            ..where((table) => table.courseSubjectId.equals(id)))
-          .write(
+      await (_database.update(
+        _database.courseSubjectLessons,
+      )..where((table) => table.courseSubjectId.equals(id))).write(
         CourseSubjectLessonsCompanion(
           isDeleted: const Value(true),
           updatedAt: Value(now),
@@ -71,7 +73,9 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
   }
 
   @override
-  Future<List<CourseSubject>> getAllSubjects({String? academicProfileId}) async {
+  Future<List<CourseSubject>> getAllSubjects({
+    String? academicProfileId,
+  }) async {
     final query = _database.select(_database.courseSubjects)
       ..where((table) => table.isDeleted.equals(false));
 
@@ -99,7 +103,9 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
   @override
   Future<void> saveSubject(CourseSubject subject) async {
     await _database.transaction(() async {
-      await _database.into(_database.courseSubjects).insertOnConflictUpdate(
+      await _database
+          .into(_database.courseSubjects)
+          .insertOnConflictUpdate(
             CourseSubjectsCompanion(
               id: Value(subject.id),
               remoteId: Value(subject.remoteId),
@@ -113,10 +119,18 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
               workloadHours: Value(subject.workloadHours),
               electiveHours: Value(subject.electiveHours),
               suggestedSemester: Value(subject.suggestedSemester),
+              prerequisiteSubjectIdsJson: Value(
+                _encodePrerequisiteSubjectIds(subject.prerequisiteSubjectIds),
+              ),
               scheduledWeekday: Value(subject.scheduledWeekday),
               defaultLessonHours: Value(subject.defaultLessonHours),
               type: Value(subject.type.name),
               status: Value(subject.status.name),
+              creditSourceSubjectId: Value(subject.creditSourceSubjectId),
+              creditSourceProfileId: Value(subject.creditSourceProfileId),
+              creditStatus: Value(subject.creditStatus.name),
+              creditMatchScore: Value(subject.creditMatchScore),
+              syllabus: Value(subject.syllabus),
               notes: Value(subject.notes),
             ),
           );
@@ -132,7 +146,9 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
   @override
   Future<void> saveLesson(CourseSubjectLesson lesson) async {
     await _database.transaction(() async {
-      await _database.into(_database.courseSubjectLessons).insertOnConflictUpdate(
+      await _database
+          .into(_database.courseSubjectLessons)
+          .insertOnConflictUpdate(
             CourseSubjectLessonsCompanion(
               id: Value(lesson.id),
               remoteId: Value(lesson.remoteId),
@@ -150,7 +166,9 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
               assessmentDate: Value(lesson.assessmentDate),
               pdfName: Value(lesson.pdfName),
               pdfBytes: Value(
-                lesson.pdfBytes == null ? null : Uint8List.fromList(lesson.pdfBytes!),
+                lesson.pdfBytes == null
+                    ? null
+                    : Uint8List.fromList(lesson.pdfBytes!),
               ),
               wasAbsent: Value(lesson.wasAbsent),
             ),
@@ -167,9 +185,9 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
   @override
   Future<void> updateStatus(String id, CourseSubjectStatus status) async {
     final now = DateTime.now();
-    await (_database.update(_database.courseSubjects)
-          ..where((table) => table.id.equals(id)))
-        .write(
+    await (_database.update(
+      _database.courseSubjects,
+    )..where((table) => table.id.equals(id))).write(
       CourseSubjectsCompanion(
         status: Value(status.name),
         updatedAt: Value(now),
@@ -192,9 +210,9 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
   @override
   Future<void> deleteLesson(String id) async {
     final now = DateTime.now();
-    await (_database.update(_database.courseSubjectLessons)
-          ..where((table) => table.id.equals(id)))
-        .write(
+    await (_database.update(
+      _database.courseSubjectLessons,
+    )..where((table) => table.id.equals(id))).write(
       CourseSubjectLessonsCompanion(
         isDeleted: const Value(true),
         updatedAt: Value(now),
@@ -235,7 +253,8 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
     final query = _database.select(_database.courseSubjectLessons)
       ..where(
         (table) =>
-            table.isDeleted.equals(false) & table.courseSubjectId.equals(subjectId),
+            table.isDeleted.equals(false) &
+            table.courseSubjectId.equals(subjectId),
       )
       ..orderBy([
         (table) => OrderingTerm.desc(table.lessonDate),
@@ -259,10 +278,18 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
       workloadHours: row.workloadHours,
       electiveHours: row.electiveHours,
       suggestedSemester: row.suggestedSemester,
+      prerequisiteSubjectIds: _decodePrerequisiteSubjectIds(
+        row.prerequisiteSubjectIdsJson,
+      ),
       scheduledWeekday: row.scheduledWeekday,
       defaultLessonHours: row.defaultLessonHours,
       type: CourseSubjectType.values.byName(row.type),
       status: CourseSubjectStatus.values.byName(row.status),
+      creditSourceSubjectId: row.creditSourceSubjectId,
+      creditSourceProfileId: row.creditSourceProfileId,
+      creditStatus: CourseSubjectCreditStatus.values.byName(row.creditStatus),
+      creditMatchScore: row.creditMatchScore,
+      syllabus: row.syllabus,
       notes: row.notes,
     );
   }
@@ -287,5 +314,31 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
       pdfBytes: row.pdfBytes,
       wasAbsent: row.wasAbsent,
     );
+  }
+
+  String _encodePrerequisiteSubjectIds(List<String> ids) {
+    return jsonEncode(ids.where((id) => id.trim().isNotEmpty).toList());
+  }
+
+  List<String> _decodePrerequisiteSubjectIds(String rawValue) {
+    final trimmed = rawValue.trim();
+    if (trimmed.isEmpty) {
+      return const <String>[];
+    }
+
+    try {
+      final decoded = jsonDecode(trimmed);
+      if (decoded is List) {
+        return decoded
+            .whereType<String>()
+            .map((value) => value.trim())
+            .where((value) => value.isNotEmpty)
+            .toList();
+      }
+    } catch (_) {
+      return const <String>[];
+    }
+
+    return const <String>[];
   }
 }

@@ -1210,6 +1210,18 @@ class $CourseSubjectsTable extends CourseSubjects
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _prerequisiteSubjectIdsJsonMeta =
+      const VerificationMeta('prerequisiteSubjectIdsJson');
+  @override
+  late final GeneratedColumn<String> prerequisiteSubjectIdsJson =
+      GeneratedColumn<String>(
+        'prerequisite_subject_ids_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
   static const VerificationMeta _scheduledWeekdayMeta = const VerificationMeta(
     'scheduledWeekday',
   );
@@ -1250,6 +1262,62 @@ class $CourseSubjectsTable extends CourseSubjects
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _creditSourceSubjectIdMeta =
+      const VerificationMeta('creditSourceSubjectId');
+  @override
+  late final GeneratedColumn<String> creditSourceSubjectId =
+      GeneratedColumn<String>(
+        'credit_source_subject_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _creditSourceProfileIdMeta =
+      const VerificationMeta('creditSourceProfileId');
+  @override
+  late final GeneratedColumn<String> creditSourceProfileId =
+      GeneratedColumn<String>(
+        'credit_source_profile_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _creditStatusMeta = const VerificationMeta(
+    'creditStatus',
+  );
+  @override
+  late final GeneratedColumn<String> creditStatus = GeneratedColumn<String>(
+    'credit_status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('none'),
+  );
+  static const VerificationMeta _creditMatchScoreMeta = const VerificationMeta(
+    'creditMatchScore',
+  );
+  @override
+  late final GeneratedColumn<double> creditMatchScore = GeneratedColumn<double>(
+    'credit_match_score',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _syllabusMeta = const VerificationMeta(
+    'syllabus',
+  );
+  @override
+  late final GeneratedColumn<String> syllabus = GeneratedColumn<String>(
+    'syllabus',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
@@ -1273,10 +1341,16 @@ class $CourseSubjectsTable extends CourseSubjects
     workloadHours,
     electiveHours,
     suggestedSemester,
+    prerequisiteSubjectIdsJson,
     scheduledWeekday,
     defaultLessonHours,
     type,
     status,
+    creditSourceSubjectId,
+    creditSourceProfileId,
+    creditStatus,
+    creditMatchScore,
+    syllabus,
     notes,
   ];
   @override
@@ -1384,6 +1458,15 @@ class $CourseSubjectsTable extends CourseSubjects
         ),
       );
     }
+    if (data.containsKey('prerequisite_subject_ids_json')) {
+      context.handle(
+        _prerequisiteSubjectIdsJsonMeta,
+        prerequisiteSubjectIdsJson.isAcceptableOrUnknown(
+          data['prerequisite_subject_ids_json']!,
+          _prerequisiteSubjectIdsJsonMeta,
+        ),
+      );
+    }
     if (data.containsKey('scheduled_weekday')) {
       context.handle(
         _scheduledWeekdayMeta,
@@ -1417,6 +1500,48 @@ class $CourseSubjectsTable extends CourseSubjects
       );
     } else if (isInserting) {
       context.missing(_statusMeta);
+    }
+    if (data.containsKey('credit_source_subject_id')) {
+      context.handle(
+        _creditSourceSubjectIdMeta,
+        creditSourceSubjectId.isAcceptableOrUnknown(
+          data['credit_source_subject_id']!,
+          _creditSourceSubjectIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('credit_source_profile_id')) {
+      context.handle(
+        _creditSourceProfileIdMeta,
+        creditSourceProfileId.isAcceptableOrUnknown(
+          data['credit_source_profile_id']!,
+          _creditSourceProfileIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('credit_status')) {
+      context.handle(
+        _creditStatusMeta,
+        creditStatus.isAcceptableOrUnknown(
+          data['credit_status']!,
+          _creditStatusMeta,
+        ),
+      );
+    }
+    if (data.containsKey('credit_match_score')) {
+      context.handle(
+        _creditMatchScoreMeta,
+        creditMatchScore.isAcceptableOrUnknown(
+          data['credit_match_score']!,
+          _creditMatchScoreMeta,
+        ),
+      );
+    }
+    if (data.containsKey('syllabus')) {
+      context.handle(
+        _syllabusMeta,
+        syllabus.isAcceptableOrUnknown(data['syllabus']!, _syllabusMeta),
+      );
     }
     if (data.containsKey('notes')) {
       context.handle(
@@ -1481,6 +1606,10 @@ class $CourseSubjectsTable extends CourseSubjects
         DriftSqlType.int,
         data['${effectivePrefix}suggested_semester'],
       ),
+      prerequisiteSubjectIdsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}prerequisite_subject_ids_json'],
+      )!,
       scheduledWeekday: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}scheduled_weekday'],
@@ -1497,6 +1626,26 @@ class $CourseSubjectsTable extends CourseSubjects
         DriftSqlType.string,
         data['${effectivePrefix}status'],
       )!,
+      creditSourceSubjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}credit_source_subject_id'],
+      ),
+      creditSourceProfileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}credit_source_profile_id'],
+      ),
+      creditStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}credit_status'],
+      )!,
+      creditMatchScore: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}credit_match_score'],
+      ),
+      syllabus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}syllabus'],
+      ),
       notes: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
@@ -1524,10 +1673,16 @@ class CourseSubjectRow extends DataClass
   final int workloadHours;
   final int? electiveHours;
   final int? suggestedSemester;
+  final String prerequisiteSubjectIdsJson;
   final int? scheduledWeekday;
   final double? defaultLessonHours;
   final String type;
   final String status;
+  final String? creditSourceSubjectId;
+  final String? creditSourceProfileId;
+  final String creditStatus;
+  final double? creditMatchScore;
+  final String? syllabus;
   final String? notes;
   const CourseSubjectRow({
     required this.id,
@@ -1542,10 +1697,16 @@ class CourseSubjectRow extends DataClass
     required this.workloadHours,
     this.electiveHours,
     this.suggestedSemester,
+    required this.prerequisiteSubjectIdsJson,
     this.scheduledWeekday,
     this.defaultLessonHours,
     required this.type,
     required this.status,
+    this.creditSourceSubjectId,
+    this.creditSourceProfileId,
+    required this.creditStatus,
+    this.creditMatchScore,
+    this.syllabus,
     this.notes,
   });
   @override
@@ -1573,6 +1734,9 @@ class CourseSubjectRow extends DataClass
     if (!nullToAbsent || suggestedSemester != null) {
       map['suggested_semester'] = Variable<int>(suggestedSemester);
     }
+    map['prerequisite_subject_ids_json'] = Variable<String>(
+      prerequisiteSubjectIdsJson,
+    );
     if (!nullToAbsent || scheduledWeekday != null) {
       map['scheduled_weekday'] = Variable<int>(scheduledWeekday);
     }
@@ -1581,6 +1745,19 @@ class CourseSubjectRow extends DataClass
     }
     map['type'] = Variable<String>(type);
     map['status'] = Variable<String>(status);
+    if (!nullToAbsent || creditSourceSubjectId != null) {
+      map['credit_source_subject_id'] = Variable<String>(creditSourceSubjectId);
+    }
+    if (!nullToAbsent || creditSourceProfileId != null) {
+      map['credit_source_profile_id'] = Variable<String>(creditSourceProfileId);
+    }
+    map['credit_status'] = Variable<String>(creditStatus);
+    if (!nullToAbsent || creditMatchScore != null) {
+      map['credit_match_score'] = Variable<double>(creditMatchScore);
+    }
+    if (!nullToAbsent || syllabus != null) {
+      map['syllabus'] = Variable<String>(syllabus);
+    }
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
@@ -1609,6 +1786,7 @@ class CourseSubjectRow extends DataClass
       suggestedSemester: suggestedSemester == null && nullToAbsent
           ? const Value.absent()
           : Value(suggestedSemester),
+      prerequisiteSubjectIdsJson: Value(prerequisiteSubjectIdsJson),
       scheduledWeekday: scheduledWeekday == null && nullToAbsent
           ? const Value.absent()
           : Value(scheduledWeekday),
@@ -1617,6 +1795,19 @@ class CourseSubjectRow extends DataClass
           : Value(defaultLessonHours),
       type: Value(type),
       status: Value(status),
+      creditSourceSubjectId: creditSourceSubjectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(creditSourceSubjectId),
+      creditSourceProfileId: creditSourceProfileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(creditSourceProfileId),
+      creditStatus: Value(creditStatus),
+      creditMatchScore: creditMatchScore == null && nullToAbsent
+          ? const Value.absent()
+          : Value(creditMatchScore),
+      syllabus: syllabus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syllabus),
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
@@ -1643,12 +1834,24 @@ class CourseSubjectRow extends DataClass
       workloadHours: serializer.fromJson<int>(json['workloadHours']),
       electiveHours: serializer.fromJson<int?>(json['electiveHours']),
       suggestedSemester: serializer.fromJson<int?>(json['suggestedSemester']),
+      prerequisiteSubjectIdsJson: serializer.fromJson<String>(
+        json['prerequisiteSubjectIdsJson'],
+      ),
       scheduledWeekday: serializer.fromJson<int?>(json['scheduledWeekday']),
       defaultLessonHours: serializer.fromJson<double?>(
         json['defaultLessonHours'],
       ),
       type: serializer.fromJson<String>(json['type']),
       status: serializer.fromJson<String>(json['status']),
+      creditSourceSubjectId: serializer.fromJson<String?>(
+        json['creditSourceSubjectId'],
+      ),
+      creditSourceProfileId: serializer.fromJson<String?>(
+        json['creditSourceProfileId'],
+      ),
+      creditStatus: serializer.fromJson<String>(json['creditStatus']),
+      creditMatchScore: serializer.fromJson<double?>(json['creditMatchScore']),
+      syllabus: serializer.fromJson<String?>(json['syllabus']),
       notes: serializer.fromJson<String?>(json['notes']),
     );
   }
@@ -1668,10 +1871,22 @@ class CourseSubjectRow extends DataClass
       'workloadHours': serializer.toJson<int>(workloadHours),
       'electiveHours': serializer.toJson<int?>(electiveHours),
       'suggestedSemester': serializer.toJson<int?>(suggestedSemester),
+      'prerequisiteSubjectIdsJson': serializer.toJson<String>(
+        prerequisiteSubjectIdsJson,
+      ),
       'scheduledWeekday': serializer.toJson<int?>(scheduledWeekday),
       'defaultLessonHours': serializer.toJson<double?>(defaultLessonHours),
       'type': serializer.toJson<String>(type),
       'status': serializer.toJson<String>(status),
+      'creditSourceSubjectId': serializer.toJson<String?>(
+        creditSourceSubjectId,
+      ),
+      'creditSourceProfileId': serializer.toJson<String?>(
+        creditSourceProfileId,
+      ),
+      'creditStatus': serializer.toJson<String>(creditStatus),
+      'creditMatchScore': serializer.toJson<double?>(creditMatchScore),
+      'syllabus': serializer.toJson<String?>(syllabus),
       'notes': serializer.toJson<String?>(notes),
     };
   }
@@ -1689,10 +1904,16 @@ class CourseSubjectRow extends DataClass
     int? workloadHours,
     Value<int?> electiveHours = const Value.absent(),
     Value<int?> suggestedSemester = const Value.absent(),
+    String? prerequisiteSubjectIdsJson,
     Value<int?> scheduledWeekday = const Value.absent(),
     Value<double?> defaultLessonHours = const Value.absent(),
     String? type,
     String? status,
+    Value<String?> creditSourceSubjectId = const Value.absent(),
+    Value<String?> creditSourceProfileId = const Value.absent(),
+    String? creditStatus,
+    Value<double?> creditMatchScore = const Value.absent(),
+    Value<String?> syllabus = const Value.absent(),
     Value<String?> notes = const Value.absent(),
   }) => CourseSubjectRow(
     id: id ?? this.id,
@@ -1713,6 +1934,8 @@ class CourseSubjectRow extends DataClass
     suggestedSemester: suggestedSemester.present
         ? suggestedSemester.value
         : this.suggestedSemester,
+    prerequisiteSubjectIdsJson:
+        prerequisiteSubjectIdsJson ?? this.prerequisiteSubjectIdsJson,
     scheduledWeekday: scheduledWeekday.present
         ? scheduledWeekday.value
         : this.scheduledWeekday,
@@ -1721,6 +1944,17 @@ class CourseSubjectRow extends DataClass
         : this.defaultLessonHours,
     type: type ?? this.type,
     status: status ?? this.status,
+    creditSourceSubjectId: creditSourceSubjectId.present
+        ? creditSourceSubjectId.value
+        : this.creditSourceSubjectId,
+    creditSourceProfileId: creditSourceProfileId.present
+        ? creditSourceProfileId.value
+        : this.creditSourceProfileId,
+    creditStatus: creditStatus ?? this.creditStatus,
+    creditMatchScore: creditMatchScore.present
+        ? creditMatchScore.value
+        : this.creditMatchScore,
+    syllabus: syllabus.present ? syllabus.value : this.syllabus,
     notes: notes.present ? notes.value : this.notes,
   );
   CourseSubjectRow copyWithCompanion(CourseSubjectsCompanion data) {
@@ -1747,6 +1981,9 @@ class CourseSubjectRow extends DataClass
       suggestedSemester: data.suggestedSemester.present
           ? data.suggestedSemester.value
           : this.suggestedSemester,
+      prerequisiteSubjectIdsJson: data.prerequisiteSubjectIdsJson.present
+          ? data.prerequisiteSubjectIdsJson.value
+          : this.prerequisiteSubjectIdsJson,
       scheduledWeekday: data.scheduledWeekday.present
           ? data.scheduledWeekday.value
           : this.scheduledWeekday,
@@ -1755,6 +1992,19 @@ class CourseSubjectRow extends DataClass
           : this.defaultLessonHours,
       type: data.type.present ? data.type.value : this.type,
       status: data.status.present ? data.status.value : this.status,
+      creditSourceSubjectId: data.creditSourceSubjectId.present
+          ? data.creditSourceSubjectId.value
+          : this.creditSourceSubjectId,
+      creditSourceProfileId: data.creditSourceProfileId.present
+          ? data.creditSourceProfileId.value
+          : this.creditSourceProfileId,
+      creditStatus: data.creditStatus.present
+          ? data.creditStatus.value
+          : this.creditStatus,
+      creditMatchScore: data.creditMatchScore.present
+          ? data.creditMatchScore.value
+          : this.creditMatchScore,
+      syllabus: data.syllabus.present ? data.syllabus.value : this.syllabus,
       notes: data.notes.present ? data.notes.value : this.notes,
     );
   }
@@ -1774,17 +2024,23 @@ class CourseSubjectRow extends DataClass
           ..write('workloadHours: $workloadHours, ')
           ..write('electiveHours: $electiveHours, ')
           ..write('suggestedSemester: $suggestedSemester, ')
+          ..write('prerequisiteSubjectIdsJson: $prerequisiteSubjectIdsJson, ')
           ..write('scheduledWeekday: $scheduledWeekday, ')
           ..write('defaultLessonHours: $defaultLessonHours, ')
           ..write('type: $type, ')
           ..write('status: $status, ')
+          ..write('creditSourceSubjectId: $creditSourceSubjectId, ')
+          ..write('creditSourceProfileId: $creditSourceProfileId, ')
+          ..write('creditStatus: $creditStatus, ')
+          ..write('creditMatchScore: $creditMatchScore, ')
+          ..write('syllabus: $syllabus, ')
           ..write('notes: $notes')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     remoteId,
     createdAt,
@@ -1797,12 +2053,18 @@ class CourseSubjectRow extends DataClass
     workloadHours,
     electiveHours,
     suggestedSemester,
+    prerequisiteSubjectIdsJson,
     scheduledWeekday,
     defaultLessonHours,
     type,
     status,
+    creditSourceSubjectId,
+    creditSourceProfileId,
+    creditStatus,
+    creditMatchScore,
+    syllabus,
     notes,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1819,10 +2081,16 @@ class CourseSubjectRow extends DataClass
           other.workloadHours == this.workloadHours &&
           other.electiveHours == this.electiveHours &&
           other.suggestedSemester == this.suggestedSemester &&
+          other.prerequisiteSubjectIdsJson == this.prerequisiteSubjectIdsJson &&
           other.scheduledWeekday == this.scheduledWeekday &&
           other.defaultLessonHours == this.defaultLessonHours &&
           other.type == this.type &&
           other.status == this.status &&
+          other.creditSourceSubjectId == this.creditSourceSubjectId &&
+          other.creditSourceProfileId == this.creditSourceProfileId &&
+          other.creditStatus == this.creditStatus &&
+          other.creditMatchScore == this.creditMatchScore &&
+          other.syllabus == this.syllabus &&
           other.notes == this.notes);
 }
 
@@ -1839,10 +2107,16 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
   final Value<int> workloadHours;
   final Value<int?> electiveHours;
   final Value<int?> suggestedSemester;
+  final Value<String> prerequisiteSubjectIdsJson;
   final Value<int?> scheduledWeekday;
   final Value<double?> defaultLessonHours;
   final Value<String> type;
   final Value<String> status;
+  final Value<String?> creditSourceSubjectId;
+  final Value<String?> creditSourceProfileId;
+  final Value<String> creditStatus;
+  final Value<double?> creditMatchScore;
+  final Value<String?> syllabus;
   final Value<String?> notes;
   final Value<int> rowid;
   const CourseSubjectsCompanion({
@@ -1858,10 +2132,16 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
     this.workloadHours = const Value.absent(),
     this.electiveHours = const Value.absent(),
     this.suggestedSemester = const Value.absent(),
+    this.prerequisiteSubjectIdsJson = const Value.absent(),
     this.scheduledWeekday = const Value.absent(),
     this.defaultLessonHours = const Value.absent(),
     this.type = const Value.absent(),
     this.status = const Value.absent(),
+    this.creditSourceSubjectId = const Value.absent(),
+    this.creditSourceProfileId = const Value.absent(),
+    this.creditStatus = const Value.absent(),
+    this.creditMatchScore = const Value.absent(),
+    this.syllabus = const Value.absent(),
     this.notes = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1878,10 +2158,16 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
     required int workloadHours,
     this.electiveHours = const Value.absent(),
     this.suggestedSemester = const Value.absent(),
+    this.prerequisiteSubjectIdsJson = const Value.absent(),
     this.scheduledWeekday = const Value.absent(),
     this.defaultLessonHours = const Value.absent(),
     required String type,
     required String status,
+    this.creditSourceSubjectId = const Value.absent(),
+    this.creditSourceProfileId = const Value.absent(),
+    this.creditStatus = const Value.absent(),
+    this.creditMatchScore = const Value.absent(),
+    this.syllabus = const Value.absent(),
     this.notes = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -1905,10 +2191,16 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
     Expression<int>? workloadHours,
     Expression<int>? electiveHours,
     Expression<int>? suggestedSemester,
+    Expression<String>? prerequisiteSubjectIdsJson,
     Expression<int>? scheduledWeekday,
     Expression<double>? defaultLessonHours,
     Expression<String>? type,
     Expression<String>? status,
+    Expression<String>? creditSourceSubjectId,
+    Expression<String>? creditSourceProfileId,
+    Expression<String>? creditStatus,
+    Expression<double>? creditMatchScore,
+    Expression<String>? syllabus,
     Expression<String>? notes,
     Expression<int>? rowid,
   }) {
@@ -1925,11 +2217,20 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
       if (workloadHours != null) 'workload_hours': workloadHours,
       if (electiveHours != null) 'elective_hours': electiveHours,
       if (suggestedSemester != null) 'suggested_semester': suggestedSemester,
+      if (prerequisiteSubjectIdsJson != null)
+        'prerequisite_subject_ids_json': prerequisiteSubjectIdsJson,
       if (scheduledWeekday != null) 'scheduled_weekday': scheduledWeekday,
       if (defaultLessonHours != null)
         'default_lesson_hours': defaultLessonHours,
       if (type != null) 'type': type,
       if (status != null) 'status': status,
+      if (creditSourceSubjectId != null)
+        'credit_source_subject_id': creditSourceSubjectId,
+      if (creditSourceProfileId != null)
+        'credit_source_profile_id': creditSourceProfileId,
+      if (creditStatus != null) 'credit_status': creditStatus,
+      if (creditMatchScore != null) 'credit_match_score': creditMatchScore,
+      if (syllabus != null) 'syllabus': syllabus,
       if (notes != null) 'notes': notes,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1948,10 +2249,16 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
     Value<int>? workloadHours,
     Value<int?>? electiveHours,
     Value<int?>? suggestedSemester,
+    Value<String>? prerequisiteSubjectIdsJson,
     Value<int?>? scheduledWeekday,
     Value<double?>? defaultLessonHours,
     Value<String>? type,
     Value<String>? status,
+    Value<String?>? creditSourceSubjectId,
+    Value<String?>? creditSourceProfileId,
+    Value<String>? creditStatus,
+    Value<double?>? creditMatchScore,
+    Value<String?>? syllabus,
     Value<String?>? notes,
     Value<int>? rowid,
   }) {
@@ -1968,10 +2275,19 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
       workloadHours: workloadHours ?? this.workloadHours,
       electiveHours: electiveHours ?? this.electiveHours,
       suggestedSemester: suggestedSemester ?? this.suggestedSemester,
+      prerequisiteSubjectIdsJson:
+          prerequisiteSubjectIdsJson ?? this.prerequisiteSubjectIdsJson,
       scheduledWeekday: scheduledWeekday ?? this.scheduledWeekday,
       defaultLessonHours: defaultLessonHours ?? this.defaultLessonHours,
       type: type ?? this.type,
       status: status ?? this.status,
+      creditSourceSubjectId:
+          creditSourceSubjectId ?? this.creditSourceSubjectId,
+      creditSourceProfileId:
+          creditSourceProfileId ?? this.creditSourceProfileId,
+      creditStatus: creditStatus ?? this.creditStatus,
+      creditMatchScore: creditMatchScore ?? this.creditMatchScore,
+      syllabus: syllabus ?? this.syllabus,
       notes: notes ?? this.notes,
       rowid: rowid ?? this.rowid,
     );
@@ -2016,6 +2332,11 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
     if (suggestedSemester.present) {
       map['suggested_semester'] = Variable<int>(suggestedSemester.value);
     }
+    if (prerequisiteSubjectIdsJson.present) {
+      map['prerequisite_subject_ids_json'] = Variable<String>(
+        prerequisiteSubjectIdsJson.value,
+      );
+    }
     if (scheduledWeekday.present) {
       map['scheduled_weekday'] = Variable<int>(scheduledWeekday.value);
     }
@@ -2027,6 +2348,25 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
     }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
+    }
+    if (creditSourceSubjectId.present) {
+      map['credit_source_subject_id'] = Variable<String>(
+        creditSourceSubjectId.value,
+      );
+    }
+    if (creditSourceProfileId.present) {
+      map['credit_source_profile_id'] = Variable<String>(
+        creditSourceProfileId.value,
+      );
+    }
+    if (creditStatus.present) {
+      map['credit_status'] = Variable<String>(creditStatus.value);
+    }
+    if (creditMatchScore.present) {
+      map['credit_match_score'] = Variable<double>(creditMatchScore.value);
+    }
+    if (syllabus.present) {
+      map['syllabus'] = Variable<String>(syllabus.value);
     }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
@@ -2052,10 +2392,16 @@ class CourseSubjectsCompanion extends UpdateCompanion<CourseSubjectRow> {
           ..write('workloadHours: $workloadHours, ')
           ..write('electiveHours: $electiveHours, ')
           ..write('suggestedSemester: $suggestedSemester, ')
+          ..write('prerequisiteSubjectIdsJson: $prerequisiteSubjectIdsJson, ')
           ..write('scheduledWeekday: $scheduledWeekday, ')
           ..write('defaultLessonHours: $defaultLessonHours, ')
           ..write('type: $type, ')
           ..write('status: $status, ')
+          ..write('creditSourceSubjectId: $creditSourceSubjectId, ')
+          ..write('creditSourceProfileId: $creditSourceProfileId, ')
+          ..write('creditStatus: $creditStatus, ')
+          ..write('creditMatchScore: $creditMatchScore, ')
+          ..write('syllabus: $syllabus, ')
           ..write('notes: $notes, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -10743,10 +11089,16 @@ typedef $$CourseSubjectsTableCreateCompanionBuilder =
       required int workloadHours,
       Value<int?> electiveHours,
       Value<int?> suggestedSemester,
+      Value<String> prerequisiteSubjectIdsJson,
       Value<int?> scheduledWeekday,
       Value<double?> defaultLessonHours,
       required String type,
       required String status,
+      Value<String?> creditSourceSubjectId,
+      Value<String?> creditSourceProfileId,
+      Value<String> creditStatus,
+      Value<double?> creditMatchScore,
+      Value<String?> syllabus,
       Value<String?> notes,
       Value<int> rowid,
     });
@@ -10764,10 +11116,16 @@ typedef $$CourseSubjectsTableUpdateCompanionBuilder =
       Value<int> workloadHours,
       Value<int?> electiveHours,
       Value<int?> suggestedSemester,
+      Value<String> prerequisiteSubjectIdsJson,
       Value<int?> scheduledWeekday,
       Value<double?> defaultLessonHours,
       Value<String> type,
       Value<String> status,
+      Value<String?> creditSourceSubjectId,
+      Value<String?> creditSourceProfileId,
+      Value<String> creditStatus,
+      Value<double?> creditMatchScore,
+      Value<String?> syllabus,
       Value<String?> notes,
       Value<int> rowid,
     });
@@ -10899,6 +11257,11 @@ class $$CourseSubjectsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get prerequisiteSubjectIdsJson => $composableBuilder(
+    column: $table.prerequisiteSubjectIdsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get scheduledWeekday => $composableBuilder(
     column: $table.scheduledWeekday,
     builder: (column) => ColumnFilters(column),
@@ -10916,6 +11279,31 @@ class $$CourseSubjectsTableFilterComposer
 
   ColumnFilters<String> get status => $composableBuilder(
     column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get creditSourceSubjectId => $composableBuilder(
+    column: $table.creditSourceSubjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get creditSourceProfileId => $composableBuilder(
+    column: $table.creditSourceProfileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get creditStatus => $composableBuilder(
+    column: $table.creditStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get creditMatchScore => $composableBuilder(
+    column: $table.creditMatchScore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get syllabus => $composableBuilder(
+    column: $table.syllabus,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11037,6 +11425,11 @@ class $$CourseSubjectsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get prerequisiteSubjectIdsJson => $composableBuilder(
+    column: $table.prerequisiteSubjectIdsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get scheduledWeekday => $composableBuilder(
     column: $table.scheduledWeekday,
     builder: (column) => ColumnOrderings(column),
@@ -11054,6 +11447,31 @@ class $$CourseSubjectsTableOrderingComposer
 
   ColumnOrderings<String> get status => $composableBuilder(
     column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get creditSourceSubjectId => $composableBuilder(
+    column: $table.creditSourceSubjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get creditSourceProfileId => $composableBuilder(
+    column: $table.creditSourceProfileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get creditStatus => $composableBuilder(
+    column: $table.creditStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get creditMatchScore => $composableBuilder(
+    column: $table.creditMatchScore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get syllabus => $composableBuilder(
+    column: $table.syllabus,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -11136,6 +11554,11 @@ class $$CourseSubjectsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get prerequisiteSubjectIdsJson => $composableBuilder(
+    column: $table.prerequisiteSubjectIdsJson,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get scheduledWeekday => $composableBuilder(
     column: $table.scheduledWeekday,
     builder: (column) => column,
@@ -11151,6 +11574,29 @@ class $$CourseSubjectsTableAnnotationComposer
 
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get creditSourceSubjectId => $composableBuilder(
+    column: $table.creditSourceSubjectId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get creditSourceProfileId => $composableBuilder(
+    column: $table.creditSourceProfileId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get creditStatus => $composableBuilder(
+    column: $table.creditStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get creditMatchScore => $composableBuilder(
+    column: $table.creditMatchScore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get syllabus =>
+      $composableBuilder(column: $table.syllabus, builder: (column) => column);
 
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
@@ -11250,10 +11696,16 @@ class $$CourseSubjectsTableTableManager
                 Value<int> workloadHours = const Value.absent(),
                 Value<int?> electiveHours = const Value.absent(),
                 Value<int?> suggestedSemester = const Value.absent(),
+                Value<String> prerequisiteSubjectIdsJson = const Value.absent(),
                 Value<int?> scheduledWeekday = const Value.absent(),
                 Value<double?> defaultLessonHours = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<String> status = const Value.absent(),
+                Value<String?> creditSourceSubjectId = const Value.absent(),
+                Value<String?> creditSourceProfileId = const Value.absent(),
+                Value<String> creditStatus = const Value.absent(),
+                Value<double?> creditMatchScore = const Value.absent(),
+                Value<String?> syllabus = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CourseSubjectsCompanion(
@@ -11269,10 +11721,16 @@ class $$CourseSubjectsTableTableManager
                 workloadHours: workloadHours,
                 electiveHours: electiveHours,
                 suggestedSemester: suggestedSemester,
+                prerequisiteSubjectIdsJson: prerequisiteSubjectIdsJson,
                 scheduledWeekday: scheduledWeekday,
                 defaultLessonHours: defaultLessonHours,
                 type: type,
                 status: status,
+                creditSourceSubjectId: creditSourceSubjectId,
+                creditSourceProfileId: creditSourceProfileId,
+                creditStatus: creditStatus,
+                creditMatchScore: creditMatchScore,
+                syllabus: syllabus,
                 notes: notes,
                 rowid: rowid,
               ),
@@ -11290,10 +11748,16 @@ class $$CourseSubjectsTableTableManager
                 required int workloadHours,
                 Value<int?> electiveHours = const Value.absent(),
                 Value<int?> suggestedSemester = const Value.absent(),
+                Value<String> prerequisiteSubjectIdsJson = const Value.absent(),
                 Value<int?> scheduledWeekday = const Value.absent(),
                 Value<double?> defaultLessonHours = const Value.absent(),
                 required String type,
                 required String status,
+                Value<String?> creditSourceSubjectId = const Value.absent(),
+                Value<String?> creditSourceProfileId = const Value.absent(),
+                Value<String> creditStatus = const Value.absent(),
+                Value<double?> creditMatchScore = const Value.absent(),
+                Value<String?> syllabus = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CourseSubjectsCompanion.insert(
@@ -11309,10 +11773,16 @@ class $$CourseSubjectsTableTableManager
                 workloadHours: workloadHours,
                 electiveHours: electiveHours,
                 suggestedSemester: suggestedSemester,
+                prerequisiteSubjectIdsJson: prerequisiteSubjectIdsJson,
                 scheduledWeekday: scheduledWeekday,
                 defaultLessonHours: defaultLessonHours,
                 type: type,
                 status: status,
+                creditSourceSubjectId: creditSourceSubjectId,
+                creditSourceProfileId: creditSourceProfileId,
+                creditStatus: creditStatus,
+                creditMatchScore: creditMatchScore,
+                syllabus: syllabus,
                 notes: notes,
                 rowid: rowid,
               ),

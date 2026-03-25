@@ -38,10 +38,7 @@ import '../database/app_database.dart';
 import '../database/database_providers.dart';
 import 'backup_bundle.dart';
 
-enum BackupImportMode {
-  replaceAll,
-  merge,
-}
+enum BackupImportMode { replaceAll, merge }
 
 class BackupValidationException implements Exception {
   const BackupValidationException(this.message);
@@ -63,15 +60,15 @@ class BackupService {
     required InternshipRepository internshipRepository,
     required ExtensionActivityRepository extensionActivityRepository,
     required StudyManagerRepository studyManagerRepository,
-  })  : _database = database,
-        _sharedPreferences = sharedPreferences,
-        _academicProfileRepository = academicProfileRepository,
-        _courseSubjectRepository = courseSubjectRepository,
-        _attachmentRepository = attachmentRepository,
-        _complementaryActivityRepository = complementaryActivityRepository,
-        _internshipRepository = internshipRepository,
-        _extensionActivityRepository = extensionActivityRepository,
-        _studyManagerRepository = studyManagerRepository;
+  }) : _database = database,
+       _sharedPreferences = sharedPreferences,
+       _academicProfileRepository = academicProfileRepository,
+       _courseSubjectRepository = courseSubjectRepository,
+       _attachmentRepository = attachmentRepository,
+       _complementaryActivityRepository = complementaryActivityRepository,
+       _internshipRepository = internshipRepository,
+       _extensionActivityRepository = extensionActivityRepository,
+       _studyManagerRepository = studyManagerRepository;
 
   static const _restorePointKey = 'backup_restore_point_json';
   static const _restorePointCreatedAtKey = 'backup_restore_point_created_at';
@@ -174,10 +171,11 @@ class BackupService {
       courseSubjects: await _courseSubjectRepository.getAllSubjects(),
       courseSubjectLessons: await _courseSubjectRepository.getAllLessons(),
       attachments: await _attachmentRepository.getAllAttachments(),
-      complementaryActivities:
-          await _complementaryActivityRepository.getAllActivities(),
+      complementaryActivities: await _complementaryActivityRepository
+          .getAllActivities(),
       internships: await _internshipRepository.getAllInternships(),
-      extensionActivities: await _extensionActivityRepository.getAllActivities(),
+      extensionActivities: await _extensionActivityRepository
+          .getAllActivities(),
       studySubjects: await _studyManagerRepository.getAllSubjects(),
       studyTopics: await _studyManagerRepository.getAllTopics(),
       studyTasks: await _studyManagerRepository.getAllTasks(),
@@ -213,9 +211,17 @@ class BackupService {
       );
     }
 
-    _validateUniqueIds('perfis academicos', bundle.academicProfiles, (item) => item.id);
+    _validateUniqueIds(
+      'perfis academicos',
+      bundle.academicProfiles,
+      (item) => item.id,
+    );
     _validateUniqueIds('disciplinas', bundle.courseSubjects, (item) => item.id);
-    _validateUniqueIds('aulas das disciplinas', bundle.courseSubjectLessons, (item) => item.id);
+    _validateUniqueIds(
+      'aulas das disciplinas',
+      bundle.courseSubjectLessons,
+      (item) => item.id,
+    );
     _validateUniqueIds('anexos', bundle.attachments, (item) => item.id);
     _validateUniqueIds(
       'atividades complementares',
@@ -228,26 +234,46 @@ class BackupService {
       bundle.extensionActivities,
       (item) => item.id,
     );
-    _validateUniqueIds('materias de estudo', bundle.studySubjects, (item) => item.id);
+    _validateUniqueIds(
+      'materias de estudo',
+      bundle.studySubjects,
+      (item) => item.id,
+    );
     _validateUniqueIds('topicos', bundle.studyTopics, (item) => item.id);
     _validateUniqueIds('tarefas', bundle.studyTasks, (item) => item.id);
     _validateUniqueIds('sessoes', bundle.studySessions, (item) => item.id);
 
-    final academicProfileIds = bundle.academicProfiles.map((item) => item.id).toSet();
-    final courseSubjectIds = bundle.courseSubjects.map((item) => item.id).toSet();
-    final lessonIds = bundle.courseSubjectLessons.map((item) => item.id).toSet();
-    final complementaryIds = bundle.complementaryActivities.map((item) => item.id).toSet();
+    final academicProfileIds = bundle.academicProfiles
+        .map((item) => item.id)
+        .toSet();
+    final courseSubjectIds = bundle.courseSubjects
+        .map((item) => item.id)
+        .toSet();
+    final lessonIds = bundle.courseSubjectLessons
+        .map((item) => item.id)
+        .toSet();
+    final complementaryIds = bundle.complementaryActivities
+        .map((item) => item.id)
+        .toSet();
     final internshipIds = bundle.internships.map((item) => item.id).toSet();
     final studySubjectIds = bundle.studySubjects.map((item) => item.id).toSet();
     final studyTopicIds = bundle.studyTopics.map((item) => item.id).toSet();
 
-    _validateAcademicProfileLinks(bundle.courseSubjects, academicProfileIds, (item) => item.academicProfileId);
+    _validateAcademicProfileLinks(
+      bundle.courseSubjects,
+      academicProfileIds,
+      (item) => item.academicProfileId,
+    );
     _validateAcademicProfileLinks(
       bundle.complementaryActivities,
       academicProfileIds,
       (item) => item.academicProfileId,
     );
-    _validateAcademicProfileLinks(bundle.internships, academicProfileIds, (item) => item.academicProfileId);
+    _validateAcademicProfileLinks(
+      bundle.internships,
+      academicProfileIds,
+      (item) => item.academicProfileId,
+    );
     _validateAcademicProfileLinks(
       bundle.extensionActivities,
       academicProfileIds,
@@ -263,12 +289,15 @@ class BackupService {
 
     for (final attachment in bundle.attachments) {
       final ownerExists = switch (attachment.ownerType) {
-        AttachmentOwnerType.courseSubjectLesson =>
-          lessonIds.contains(attachment.ownerId),
-        AttachmentOwnerType.complementaryActivity =>
-          complementaryIds.contains(attachment.ownerId),
-        AttachmentOwnerType.internshipRecord =>
-          internshipIds.contains(attachment.ownerId),
+        AttachmentOwnerType.courseSubjectLesson => lessonIds.contains(
+          attachment.ownerId,
+        ),
+        AttachmentOwnerType.complementaryActivity => complementaryIds.contains(
+          attachment.ownerId,
+        ),
+        AttachmentOwnerType.internshipRecord => internshipIds.contains(
+          attachment.ownerId,
+        ),
       };
 
       if (!ownerExists) {
@@ -287,7 +316,8 @@ class BackupService {
     }
 
     for (final task in bundle.studyTasks) {
-      if (task.studySubjectId != null && !studySubjectIds.contains(task.studySubjectId)) {
+      if (task.studySubjectId != null &&
+          !studySubjectIds.contains(task.studySubjectId)) {
         throw BackupValidationException(
           'A tarefa "${task.title}" referencia uma materia de estudo inexistente.',
         );
@@ -295,12 +325,14 @@ class BackupService {
     }
 
     for (final session in bundle.studySessions) {
-      if (session.studySubjectId != null && !studySubjectIds.contains(session.studySubjectId)) {
+      if (session.studySubjectId != null &&
+          !studySubjectIds.contains(session.studySubjectId)) {
         throw const BackupValidationException(
           'Uma sessao de estudo referencia uma materia inexistente.',
         );
       }
-      if (session.studyTopicId != null && !studyTopicIds.contains(session.studyTopicId)) {
+      if (session.studyTopicId != null &&
+          !studyTopicIds.contains(session.studyTopicId)) {
         throw const BackupValidationException(
           'Uma sessao de estudo referencia um topico inexistente.',
         );
@@ -317,10 +349,14 @@ class BackupService {
     for (final item in items) {
       final id = pickId(item);
       if (id.isEmpty) {
-        throw BackupValidationException('O backup contem $label com identificador vazio.');
+        throw BackupValidationException(
+          'O backup contem $label com identificador vazio.',
+        );
       }
       if (!ids.add(id)) {
-        throw BackupValidationException('O backup contem ids duplicados em $label.');
+        throw BackupValidationException(
+          'O backup contem ids duplicados em $label.',
+        );
       }
     }
   }
@@ -342,7 +378,9 @@ class BackupService {
 
   Future<void> _saveTemporaryRestorePoint() async {
     final snapshot = await _buildBundle();
-    final snapshotJson = const JsonEncoder.withIndent('  ').convert(snapshot.toJson());
+    final snapshotJson = const JsonEncoder.withIndent(
+      '  ',
+    ).convert(snapshot.toJson());
     await _sharedPreferences.setString(_restorePointKey, snapshotJson);
     await _sharedPreferences.setString(
       _restorePointCreatedAtKey,
@@ -383,7 +421,9 @@ class BackupService {
         );
         batch.insertAll(
           _database.courseSubjectLessons,
-          bundle.courseSubjectLessons.map(_courseSubjectLessonCompanion).toList(),
+          bundle.courseSubjectLessons
+              .map(_courseSubjectLessonCompanion)
+              .toList(),
           mode: InsertMode.insertOrReplace,
         );
         batch.insertAll(
@@ -466,37 +506,44 @@ class BackupService {
         workloadHours: Value(subject.workloadHours),
         electiveHours: Value(subject.electiveHours),
         suggestedSemester: Value(subject.suggestedSemester),
+        prerequisiteSubjectIdsJson: Value(
+          jsonEncode(subject.prerequisiteSubjectIds),
+        ),
         scheduledWeekday: Value(subject.scheduledWeekday),
         defaultLessonHours: Value(subject.defaultLessonHours),
         type: Value(subject.type.name),
         status: Value(subject.status.name),
+        creditSourceSubjectId: Value(subject.creditSourceSubjectId),
+        creditSourceProfileId: Value(subject.creditSourceProfileId),
+        creditStatus: Value(subject.creditStatus.name),
+        creditMatchScore: Value(subject.creditMatchScore),
+        syllabus: Value(subject.syllabus),
         notes: Value(subject.notes),
       );
 
   CourseSubjectLessonsCompanion _courseSubjectLessonCompanion(
     CourseSubjectLesson lesson,
-  ) =>
-      CourseSubjectLessonsCompanion(
-        id: Value(lesson.id),
-        remoteId: Value(lesson.remoteId),
-        createdAt: Value(lesson.createdAt),
-        updatedAt: Value(lesson.updatedAt),
-        syncStatus: Value(lesson.syncStatus.name),
-        isDeleted: Value(lesson.isDeleted),
-        courseSubjectId: Value(lesson.courseSubjectId),
-        lessonDate: Value(lesson.lessonDate),
-        lessonHours: Value(lesson.lessonHours),
-        coveredContent: Value(lesson.coveredContent),
-        description: Value(lesson.description),
-        activityDescription: Value(lesson.activityDescription),
-        assessmentDescription: Value(lesson.assessmentDescription),
-        assessmentDate: Value(lesson.assessmentDate),
-        pdfName: Value(lesson.pdfName),
-        pdfBytes: Value(
-          lesson.pdfBytes == null ? null : Uint8List.fromList(lesson.pdfBytes!),
-        ),
-        wasAbsent: Value(lesson.wasAbsent),
-      );
+  ) => CourseSubjectLessonsCompanion(
+    id: Value(lesson.id),
+    remoteId: Value(lesson.remoteId),
+    createdAt: Value(lesson.createdAt),
+    updatedAt: Value(lesson.updatedAt),
+    syncStatus: Value(lesson.syncStatus.name),
+    isDeleted: Value(lesson.isDeleted),
+    courseSubjectId: Value(lesson.courseSubjectId),
+    lessonDate: Value(lesson.lessonDate),
+    lessonHours: Value(lesson.lessonHours),
+    coveredContent: Value(lesson.coveredContent),
+    description: Value(lesson.description),
+    activityDescription: Value(lesson.activityDescription),
+    assessmentDescription: Value(lesson.assessmentDescription),
+    assessmentDate: Value(lesson.assessmentDate),
+    pdfName: Value(lesson.pdfName),
+    pdfBytes: Value(
+      lesson.pdfBytes == null ? null : Uint8List.fromList(lesson.pdfBytes!),
+    ),
+    wasAbsent: Value(lesson.wasAbsent),
+  );
 
   AttachmentsCompanion _attachmentCompanion(StoredAttachment attachment) =>
       AttachmentsCompanion(
@@ -518,23 +565,22 @@ class BackupService {
 
   ComplementaryActivitiesCompanion _complementaryCompanion(
     ComplementaryActivity activity,
-  ) =>
-      ComplementaryActivitiesCompanion(
-        id: Value(activity.id),
-        remoteId: Value(activity.remoteId),
-        createdAt: Value(activity.createdAt),
-        updatedAt: Value(activity.updatedAt),
-        syncStatus: Value(activity.syncStatus.name),
-        isDeleted: Value(activity.isDeleted),
-        academicProfileId: Value(activity.academicProfileId),
-        title: Value(activity.title),
-        category: Value(activity.category),
-        date: Value(activity.date),
-        endDate: Value(activity.endDate),
-        workloadHours: Value(activity.workloadHours),
-        notes: Value(activity.notes),
-        status: Value(activity.status.name),
-      );
+  ) => ComplementaryActivitiesCompanion(
+    id: Value(activity.id),
+    remoteId: Value(activity.remoteId),
+    createdAt: Value(activity.createdAt),
+    updatedAt: Value(activity.updatedAt),
+    syncStatus: Value(activity.syncStatus.name),
+    isDeleted: Value(activity.isDeleted),
+    academicProfileId: Value(activity.academicProfileId),
+    title: Value(activity.title),
+    category: Value(activity.category),
+    date: Value(activity.date),
+    endDate: Value(activity.endDate),
+    workloadHours: Value(activity.workloadHours),
+    notes: Value(activity.notes),
+    status: Value(activity.status.name),
+  );
 
   InternshipsCompanion _internshipCompanion(InternshipRecord internship) =>
       InternshipsCompanion(
@@ -557,22 +603,21 @@ class BackupService {
 
   ExtensionActivitiesCompanion _extensionCompanion(
     ExtensionActivity activity,
-  ) =>
-      ExtensionActivitiesCompanion(
-        id: Value(activity.id),
-        remoteId: Value(activity.remoteId),
-        createdAt: Value(activity.createdAt),
-        updatedAt: Value(activity.updatedAt),
-        syncStatus: Value(activity.syncStatus.name),
-        isDeleted: Value(activity.isDeleted),
-        academicProfileId: Value(activity.academicProfileId),
-        title: Value(activity.title),
-        type: Value(activity.type),
-        date: Value(activity.date),
-        workloadHours: Value(activity.workloadHours),
-        notes: Value(activity.notes),
-        status: Value(activity.status.name),
-      );
+  ) => ExtensionActivitiesCompanion(
+    id: Value(activity.id),
+    remoteId: Value(activity.remoteId),
+    createdAt: Value(activity.createdAt),
+    updatedAt: Value(activity.updatedAt),
+    syncStatus: Value(activity.syncStatus.name),
+    isDeleted: Value(activity.isDeleted),
+    academicProfileId: Value(activity.academicProfileId),
+    title: Value(activity.title),
+    type: Value(activity.type),
+    date: Value(activity.date),
+    workloadHours: Value(activity.workloadHours),
+    notes: Value(activity.notes),
+    status: Value(activity.status.name),
+  );
 
   StudySubjectsCompanion _studySubjectCompanion(StudySubject subject) =>
       StudySubjectsCompanion(
@@ -641,8 +686,9 @@ final backupServiceProvider = Provider<BackupService>((ref) {
     academicProfileRepository: ref.watch(academicProfileRepositoryProvider),
     courseSubjectRepository: ref.watch(courseSubjectRepositoryProvider),
     attachmentRepository: ref.watch(attachmentRepositoryProvider),
-    complementaryActivityRepository:
-        ref.watch(complementaryActivityRepositoryProvider),
+    complementaryActivityRepository: ref.watch(
+      complementaryActivityRepositoryProvider,
+    ),
     internshipRepository: ref.watch(internshipRepositoryProvider),
     extensionActivityRepository: ref.watch(extensionActivityRepositoryProvider),
     studyManagerRepository: ref.watch(studyManagerRepositoryProvider),

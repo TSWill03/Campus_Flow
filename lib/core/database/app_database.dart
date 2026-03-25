@@ -3,6 +3,9 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import '../sync/sync_status.dart';
+import '../../shared/enums/app_enums.dart';
+
 part 'app_database.g.dart';
 
 @DataClassName('AcademicProfileRow')
@@ -31,12 +34,12 @@ class AcademicProfiles extends Table {
 
   @override
   List<String> get customConstraints => const [
-        'CHECK (total_course_hours >= 0)',
-        'CHECK (semester_count >= 0)',
-        'CHECK (required_complementary_hours >= 0)',
-        'CHECK (required_internship_hours >= 0)',
-        'CHECK (required_extension_hours >= 0)',
-      ];
+    'CHECK (total_course_hours >= 0)',
+    'CHECK (semester_count >= 0)',
+    'CHECK (required_complementary_hours >= 0)',
+    'CHECK (required_internship_hours >= 0)',
+    'CHECK (required_extension_hours >= 0)',
+  ];
 }
 
 @DataClassName('CourseSubjectRow')
@@ -54,10 +57,17 @@ class CourseSubjects extends Table {
   IntColumn get workloadHours => integer()();
   IntColumn get electiveHours => integer().nullable()();
   IntColumn get suggestedSemester => integer().nullable()();
+  TextColumn get prerequisiteSubjectIdsJson =>
+      text().withDefault(const Constant('[]'))();
   IntColumn get scheduledWeekday => integer().nullable()();
   RealColumn get defaultLessonHours => real().nullable()();
   TextColumn get type => text()();
   TextColumn get status => text()();
+  TextColumn get creditSourceSubjectId => text().nullable()();
+  TextColumn get creditSourceProfileId => text().nullable()();
+  TextColumn get creditStatus => text().withDefault(const Constant('none'))();
+  RealColumn get creditMatchScore => real().nullable()();
+  TextColumn get syllabus => text().nullable()();
   TextColumn get notes => text().nullable()();
 
   @override
@@ -65,10 +75,10 @@ class CourseSubjects extends Table {
 
   @override
   List<String> get customConstraints => const [
-        'CHECK (workload_hours >= 0)',
-        'CHECK (elective_hours IS NULL OR elective_hours >= 0)',
-        'CHECK (scheduled_weekday IS NULL OR scheduled_weekday BETWEEN 1 AND 7)',
-        'CHECK (default_lesson_hours IS NULL OR default_lesson_hours > 0)',
+    'CHECK (workload_hours >= 0)',
+    'CHECK (elective_hours IS NULL OR elective_hours >= 0)',
+    'CHECK (scheduled_weekday IS NULL OR scheduled_weekday BETWEEN 1 AND 7)',
+    'CHECK (default_lesson_hours IS NULL OR default_lesson_hours > 0)',
   ];
 }
 
@@ -96,9 +106,7 @@ class CourseSubjectLessons extends Table {
   Set<Column<Object>> get primaryKey => {id};
 
   @override
-  List<String> get customConstraints => const [
-        'CHECK (lesson_hours >= 0)',
-      ];
+  List<String> get customConstraints => const ['CHECK (lesson_hours >= 0)'];
 }
 
 @DataClassName('AttachmentRow')
@@ -144,9 +152,7 @@ class ComplementaryActivities extends Table {
   Set<Column<Object>> get primaryKey => {id};
 
   @override
-  List<String> get customConstraints => const [
-        'CHECK (workload_hours >= 0)',
-      ];
+  List<String> get customConstraints => const ['CHECK (workload_hours >= 0)'];
 }
 
 @DataClassName('InternshipRow')
@@ -173,9 +179,9 @@ class Internships extends Table {
 
   @override
   List<String> get customConstraints => const [
-        'CHECK (total_hours >= 0)',
-        'CHECK (completed_hours >= 0)',
-      ];
+    'CHECK (total_hours >= 0)',
+    'CHECK (completed_hours >= 0)',
+  ];
 }
 
 @DataClassName('ExtensionActivityRow')
@@ -199,9 +205,7 @@ class ExtensionActivities extends Table {
   Set<Column<Object>> get primaryKey => {id};
 
   @override
-  List<String> get customConstraints => const [
-        'CHECK (workload_hours >= 0)',
-      ];
+  List<String> get customConstraints => const ['CHECK (workload_hours >= 0)'];
 }
 
 @DataClassName('StudySubjectRow')
@@ -267,7 +271,8 @@ class StudySessions extends Table {
   BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
   TextColumn get studySubjectId =>
       text().nullable().references(StudySubjects, #id)();
-  TextColumn get studyTopicId => text().nullable().references(StudyTopics, #id)();
+  TextColumn get studyTopicId =>
+      text().nullable().references(StudyTopics, #id)();
   DateTimeColumn get startedAt => dateTime()();
   DateTimeColumn get endedAt => dateTime()();
   IntColumn get durationMinutes => integer()();
@@ -277,9 +282,7 @@ class StudySessions extends Table {
   Set<Column<Object>> get primaryKey => {id};
 
   @override
-  List<String> get customConstraints => const [
-        'CHECK (duration_minutes >= 0)',
-      ];
+  List<String> get customConstraints => const ['CHECK (duration_minutes >= 0)'];
 }
 
 @DataClassName('SyncQueueEntryRow')
@@ -321,49 +324,59 @@ class SyncQueueEntries extends Table {
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor})
-      : super(
-          executor ??
-              driftDatabase(
-                name: 'campus_flow',
-                web: DriftWebOptions(
-                  sqlite3Wasm: Uri.parse('sqlite3.wasm'),
-                  driftWorker: Uri.parse('drift_worker.js'),
-                ),
+    : super(
+        executor ??
+            driftDatabase(
+              name: 'campus_flow',
+              web: DriftWebOptions(
+                sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+                driftWorker: Uri.parse('drift_worker.js'),
               ),
-        );
+            ),
+      );
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async {
-          await m.createAll();
-          await _createIndexes();
-        },
-        onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            await _migrateFrom1To2(m);
-          }
-          if (from < 3) {
-            await _migrateFrom2To3(m);
-          }
-          if (from < 4) {
-            await _migrateFrom3To4(m);
-          }
-          if (from < 5) {
-            await _migrateFrom4To5(m);
-          }
-          if (from < 6) {
-            await _migrateFrom5To6(m);
-          }
-          await _createIndexes();
-        },
-        beforeOpen: (details) async {
-          await customStatement('PRAGMA foreign_keys = ON');
-          await _createIndexes();
-        },
-      );
+    onCreate: (m) async {
+      await m.createAll();
+      await _createIndexes();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await _migrateFrom1To2(m);
+      }
+      if (from < 3) {
+        await _migrateFrom2To3(m);
+      }
+      if (from < 4) {
+        await _migrateFrom3To4(m);
+      }
+      if (from < 5) {
+        await _migrateFrom4To5(m);
+      }
+      if (from < 6) {
+        await _migrateFrom5To6(m);
+      }
+      if (from < 7) {
+        await _migrateFrom6To7(m);
+      }
+      if (from < 8) {
+        await _migrateFrom7To8(m);
+      }
+      if (from < 9) {
+        await _migrateFrom8To9(m);
+      }
+      await _createIndexes();
+    },
+    beforeOpen: (details) async {
+      await customStatement('PRAGMA foreign_keys = ON');
+      await _createIndexes();
+      await _cleanupOrphanedAcademicData();
+    },
+  );
 
   Future<void> _migrateFrom1To2(Migrator m) async {
     await _addColumnIfMissing(
@@ -375,7 +388,8 @@ class AppDatabase extends _$AppDatabase {
     await _addColumnIfMissing(
       tableName: 'academic_profiles',
       columnName: 'school_name',
-      statement: "ALTER TABLE academic_profiles ADD COLUMN school_name TEXT NULL",
+      statement:
+          "ALTER TABLE academic_profiles ADD COLUMN school_name TEXT NULL",
     );
     await _addColumnIfMissing(
       tableName: 'academic_profiles',
@@ -423,7 +437,8 @@ class AppDatabase extends _$AppDatabase {
     await _addColumnIfMissing(
       tableName: 'internships',
       columnName: 'academic_profile_id',
-      statement: "ALTER TABLE internships ADD COLUMN academic_profile_id TEXT NULL",
+      statement:
+          "ALTER TABLE internships ADD COLUMN academic_profile_id TEXT NULL",
     );
     await _addColumnIfMissing(
       tableName: 'extension_activities',
@@ -532,6 +547,50 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<void> _migrateFrom6To7(Migrator m) async {
+    await _addColumnIfMissing(
+      tableName: 'course_subjects',
+      columnName: 'prerequisite_subject_ids_json',
+      statement:
+          "ALTER TABLE course_subjects ADD COLUMN prerequisite_subject_ids_json TEXT NOT NULL DEFAULT '[]'",
+    );
+  }
+
+  Future<void> _migrateFrom7To8(Migrator m) async {
+    await _addColumnIfMissing(
+      tableName: 'course_subjects',
+      columnName: 'syllabus',
+      statement: 'ALTER TABLE course_subjects ADD COLUMN syllabus TEXT NULL',
+    );
+  }
+
+  Future<void> _migrateFrom8To9(Migrator m) async {
+    await _addColumnIfMissing(
+      tableName: 'course_subjects',
+      columnName: 'credit_source_subject_id',
+      statement:
+          'ALTER TABLE course_subjects ADD COLUMN credit_source_subject_id TEXT NULL',
+    );
+    await _addColumnIfMissing(
+      tableName: 'course_subjects',
+      columnName: 'credit_source_profile_id',
+      statement:
+          'ALTER TABLE course_subjects ADD COLUMN credit_source_profile_id TEXT NULL',
+    );
+    await _addColumnIfMissing(
+      tableName: 'course_subjects',
+      columnName: 'credit_status',
+      statement:
+          "ALTER TABLE course_subjects ADD COLUMN credit_status TEXT NOT NULL DEFAULT 'none'",
+    );
+    await _addColumnIfMissing(
+      tableName: 'course_subjects',
+      columnName: 'credit_match_score',
+      statement:
+          'ALTER TABLE course_subjects ADD COLUMN credit_match_score REAL NULL',
+    );
+  }
+
   Future<void> _addColumnIfMissing({
     required String tableName,
     required String columnName,
@@ -542,13 +601,212 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  Future<void> _cleanupOrphanedAcademicData() async {
+    final now = DateTime.now();
+    final activeProfileIds =
+        (await (select(
+              academicProfiles,
+            )..where((table) => table.isDeleted.equals(false))).get())
+            .map((row) => row.id)
+            .toSet();
+
+    final subjectRows = await (select(
+      courseSubjects,
+    )..where((table) => table.isDeleted.equals(false))).get();
+    final orphanedSubjectIds = subjectRows
+        .where(
+          (row) =>
+              row.academicProfileId != null &&
+              !activeProfileIds.contains(row.academicProfileId),
+        )
+        .map((row) => row.id)
+        .toSet();
+
+    final complementaryIds =
+        (await (select(
+              complementaryActivities,
+            )..where((table) => table.isDeleted.equals(false))).get())
+            .where(
+              (row) =>
+                  row.academicProfileId != null &&
+                  !activeProfileIds.contains(row.academicProfileId),
+            )
+            .map((row) => row.id)
+            .toSet();
+
+    final internshipIds =
+        (await (select(
+              internships,
+            )..where((table) => table.isDeleted.equals(false))).get())
+            .where(
+              (row) =>
+                  row.academicProfileId != null &&
+                  !activeProfileIds.contains(row.academicProfileId),
+            )
+            .map((row) => row.id)
+            .toSet();
+
+    final extensionIds =
+        (await (select(
+              extensionActivities,
+            )..where((table) => table.isDeleted.equals(false))).get())
+            .where(
+              (row) =>
+                  row.academicProfileId != null &&
+                  !activeProfileIds.contains(row.academicProfileId),
+            )
+            .map((row) => row.id)
+            .toSet();
+
+    final orphanedLessonIds = orphanedSubjectIds.isEmpty
+        ? <String>{}
+        : (await (select(courseSubjectLessons)..where(
+                    (table) =>
+                        table.isDeleted.equals(false) &
+                        table.courseSubjectId.isIn(orphanedSubjectIds),
+                  ))
+                  .get())
+              .map((row) => row.id)
+              .toSet();
+
+    final attachmentRows = await (select(
+      attachments,
+    )..where((table) => table.isDeleted.equals(false))).get();
+    final orphanedAttachmentIds = attachmentRows
+        .where(
+          (row) =>
+              (row.ownerType == 'course_subject_lesson' &&
+                  orphanedLessonIds.contains(row.ownerId)) ||
+              (row.ownerType == 'complementary_activity' &&
+                  complementaryIds.contains(row.ownerId)) ||
+              (row.ownerType == 'internship_record' &&
+                  internshipIds.contains(row.ownerId)),
+        )
+        .map((row) => row.id)
+        .toSet();
+
+    if (orphanedSubjectIds.isEmpty &&
+        orphanedLessonIds.isEmpty &&
+        orphanedAttachmentIds.isEmpty &&
+        complementaryIds.isEmpty &&
+        internshipIds.isEmpty &&
+        extensionIds.isEmpty) {
+      return;
+    }
+
+    await transaction(() async {
+      if (orphanedSubjectIds.isNotEmpty) {
+        await (update(
+          courseSubjects,
+        )..where((table) => table.id.isIn(orphanedSubjectIds))).write(
+          CourseSubjectsCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingDelete.name),
+          ),
+        );
+      }
+
+      if (orphanedLessonIds.isNotEmpty) {
+        await (update(
+          courseSubjectLessons,
+        )..where((table) => table.id.isIn(orphanedLessonIds))).write(
+          CourseSubjectLessonsCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingDelete.name),
+          ),
+        );
+      }
+
+      if (orphanedAttachmentIds.isNotEmpty) {
+        await (update(
+          attachments,
+        )..where((table) => table.id.isIn(orphanedAttachmentIds))).write(
+          AttachmentsCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingDelete.name),
+          ),
+        );
+      }
+
+      if (complementaryIds.isNotEmpty) {
+        await (update(
+          complementaryActivities,
+        )..where((table) => table.id.isIn(complementaryIds))).write(
+          ComplementaryActivitiesCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingDelete.name),
+          ),
+        );
+      }
+
+      if (internshipIds.isNotEmpty) {
+        await (update(
+          internships,
+        )..where((table) => table.id.isIn(internshipIds))).write(
+          InternshipsCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingDelete.name),
+          ),
+        );
+      }
+
+      if (extensionIds.isNotEmpty) {
+        await (update(
+          extensionActivities,
+        )..where((table) => table.id.isIn(extensionIds))).write(
+          ExtensionActivitiesCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingDelete.name),
+          ),
+        );
+      }
+
+      final remainingSubjectIds = subjectRows
+          .where((row) => !orphanedSubjectIds.contains(row.id))
+          .map((row) => row.id)
+          .toSet();
+      final creditRowsToClear = subjectRows
+          .where(
+            (row) =>
+                !orphanedSubjectIds.contains(row.id) &&
+                ((row.creditSourceProfileId != null &&
+                        !activeProfileIds.contains(
+                          row.creditSourceProfileId,
+                        )) ||
+                    (row.creditSourceSubjectId != null &&
+                        !remainingSubjectIds.contains(
+                          row.creditSourceSubjectId,
+                        ))),
+          )
+          .map((row) => row.id)
+          .toSet();
+      if (creditRowsToClear.isNotEmpty) {
+        await (update(
+          courseSubjects,
+        )..where((table) => table.id.isIn(creditRowsToClear))).write(
+          CourseSubjectsCompanion(
+            creditSourceSubjectId: const Value<String?>(null),
+            creditSourceProfileId: const Value<String?>(null),
+            creditStatus: Value(CourseSubjectCreditStatus.none.name),
+            creditMatchScore: const Value<double?>(null),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingUpdate.name),
+          ),
+        );
+      }
+    });
+  }
+
   Future<bool> _tableExists(String tableName) async {
     final result = await customSelect(
       'SELECT name FROM sqlite_master WHERE type = ?1 AND name = ?2 LIMIT 1',
-      variables: [
-        Variable.withString('table'),
-        Variable.withString(tableName),
-      ],
+      variables: [Variable.withString('table'), Variable.withString(tableName)],
     ).getSingleOrNull();
 
     return result != null;

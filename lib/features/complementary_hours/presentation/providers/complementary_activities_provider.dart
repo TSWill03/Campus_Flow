@@ -11,25 +11,27 @@ import '../../domain/repositories/complementary_activity_repository.dart';
 
 final complementaryActivityRepositoryProvider =
     Provider<ComplementaryActivityRepository>(
-  (ref) =>
-      DriftComplementaryActivityRepository(
+      (ref) => DriftComplementaryActivityRepository(
         ref.watch(appDatabaseProvider),
         ref.watch(syncQueueServiceProvider),
       ),
-);
+    );
 
 final complementaryActivitiesProvider =
-    StreamProvider<List<ComplementaryActivity>>(
-  (ref) {
-    final activeProfileId =
-        ref.watch(activeAcademicProfileProvider).valueOrNull?.id;
-    return ref
-        .watch(complementaryActivityRepositoryProvider)
-        .watchActivities(academicProfileId: activeProfileId);
-  },
-);
+    StreamProvider<List<ComplementaryActivity>>((ref) {
+      final activeProfileId = ref
+          .watch(activeAcademicProfileProvider)
+          .valueOrNull
+          ?.id;
+      if (activeProfileId == null || activeProfileId.isEmpty) {
+        return Stream.value(const <ComplementaryActivity>[]);
+      }
+      return ref
+          .watch(complementaryActivityRepositoryProvider)
+          .watchActivities(academicProfileId: activeProfileId);
+    });
 
 final complementaryActivityByIdProvider =
     FutureProvider.family<ComplementaryActivity?, String>((ref, id) {
-  return ref.watch(complementaryActivityRepositoryProvider).findById(id);
-});
+      return ref.watch(complementaryActivityRepositoryProvider).findById(id);
+    });

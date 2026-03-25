@@ -17,27 +17,46 @@ final courseSubjectRepositoryProvider = Provider<CourseSubjectRepository>(
   ),
 );
 
-final courseSubjectsProvider = StreamProvider<List<CourseSubject>>(
-  (ref) {
-    final activeProfileId =
-        ref.watch(activeAcademicProfileProvider).valueOrNull?.id;
-    return ref
-        .watch(courseSubjectRepositoryProvider)
-        .watchSubjects(academicProfileId: activeProfileId);
+final courseSubjectsProvider = StreamProvider<List<CourseSubject>>((ref) {
+  final activeProfileId = ref
+      .watch(activeAcademicProfileProvider)
+      .valueOrNull
+      ?.id;
+  if (activeProfileId == null || activeProfileId.isEmpty) {
+    return Stream.value(const <CourseSubject>[]);
+  }
+  return ref
+      .watch(courseSubjectRepositoryProvider)
+      .watchSubjects(academicProfileId: activeProfileId);
+});
+
+final allCourseSubjectsProvider = StreamProvider<List<CourseSubject>>((ref) {
+  return ref.watch(courseSubjectRepositoryProvider).watchSubjects();
+});
+
+final courseSubjectsByAcademicProfileProvider =
+    StreamProvider.family<List<CourseSubject>, String?>((ref, profileId) {
+      if (profileId == null || profileId.isEmpty) {
+        return Stream.value(const <CourseSubject>[]);
+      }
+
+      return ref
+          .watch(courseSubjectRepositoryProvider)
+          .watchSubjects(academicProfileId: profileId);
+    });
+
+final courseSubjectByIdProvider = FutureProvider.family<CourseSubject?, String>(
+  (ref, id) {
+    return ref.watch(courseSubjectRepositoryProvider).findById(id);
   },
 );
 
-final courseSubjectByIdProvider =
-    FutureProvider.family<CourseSubject?, String>((ref, id) {
-  return ref.watch(courseSubjectRepositoryProvider).findById(id);
-});
-
 final courseSubjectLessonsProvider =
     StreamProvider.family<List<CourseSubjectLesson>, String>((ref, subjectId) {
-  return ref.watch(courseSubjectRepositoryProvider).watchLessons(subjectId);
-});
+      return ref.watch(courseSubjectRepositoryProvider).watchLessons(subjectId);
+    });
 
 final courseSubjectLessonByIdProvider =
     FutureProvider.family<CourseSubjectLesson?, String>((ref, id) {
-  return ref.watch(courseSubjectRepositoryProvider).findLessonById(id);
-});
+      return ref.watch(courseSubjectRepositoryProvider).findLessonById(id);
+    });

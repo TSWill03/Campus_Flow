@@ -26,10 +26,21 @@ class AcademicProfilePage extends ConsumerWidget {
             title: 'Perfis academicos',
             subtitle:
                 'Crie um perfil para cada curso, faculdade, universidade ou etapa academica. Isso permite manter graduacao, mestrado e doutorado em paralelo.',
-            action: FilledButton.icon(
-              onPressed: () => context.push('/profile/new'),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Novo perfil'),
+            action: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => context.push('/profile/import'),
+                  icon: const Icon(Icons.upload_file_rounded),
+                  label: const Text('Importar grade'),
+                ),
+                FilledButton.icon(
+                  onPressed: () => context.push('/profile/new'),
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Novo perfil'),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
@@ -39,9 +50,19 @@ class AcademicProfilePage extends ConsumerWidget {
               title: 'Nenhum perfil academico',
               message:
                   'Crie seu primeiro perfil para organizar cursos de diferentes instituicoes ao mesmo tempo.',
-              action: FilledButton(
-                onPressed: () => context.push('/profile/new'),
-                child: const Text('Criar perfil'),
+              action: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => context.push('/profile/import'),
+                    child: const Text('Importar grade'),
+                  ),
+                  FilledButton(
+                    onPressed: () => context.push('/profile/new'),
+                    child: const Text('Criar perfil'),
+                  ),
+                ],
               ),
             )
           else
@@ -84,7 +105,8 @@ class _AcademicProfileCard extends ConsumerWidget {
                     label: 'Perfil ativo',
                     color: Color(0xFF2F855A),
                   ),
-                if (profile.degreeLabel != null && profile.degreeLabel!.isNotEmpty)
+                if (profile.degreeLabel != null &&
+                    profile.degreeLabel!.isNotEmpty)
                   StatusChip(label: profile.degreeLabel!),
               ],
             ),
@@ -147,7 +169,8 @@ class _AcademicProfileCard extends ConsumerWidget {
     WidgetRef ref,
     String id,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Remover perfil?'),

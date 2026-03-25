@@ -11,23 +11,28 @@ import '../../domain/repositories/extension_activity_repository.dart';
 
 final extensionActivityRepositoryProvider =
     Provider<ExtensionActivityRepository>(
-  (ref) => DriftExtensionActivityRepository(
-    ref.watch(appDatabaseProvider),
-    ref.watch(syncQueueServiceProvider),
-  ),
-);
+      (ref) => DriftExtensionActivityRepository(
+        ref.watch(appDatabaseProvider),
+        ref.watch(syncQueueServiceProvider),
+      ),
+    );
 
-final extensionActivitiesProvider = StreamProvider<List<ExtensionActivity>>(
-  (ref) {
-    final activeProfileId =
-        ref.watch(activeAcademicProfileProvider).valueOrNull?.id;
-    return ref
-        .watch(extensionActivityRepositoryProvider)
-        .watchActivities(academicProfileId: activeProfileId);
-  },
-);
+final extensionActivitiesProvider = StreamProvider<List<ExtensionActivity>>((
+  ref,
+) {
+  final activeProfileId = ref
+      .watch(activeAcademicProfileProvider)
+      .valueOrNull
+      ?.id;
+  if (activeProfileId == null || activeProfileId.isEmpty) {
+    return Stream.value(const <ExtensionActivity>[]);
+  }
+  return ref
+      .watch(extensionActivityRepositoryProvider)
+      .watchActivities(academicProfileId: activeProfileId);
+});
 
 final extensionActivityByIdProvider =
     FutureProvider.family<ExtensionActivity?, String>((ref, id) {
-  return ref.watch(extensionActivityRepositoryProvider).findById(id);
-});
+      return ref.watch(extensionActivityRepositoryProvider).findById(id);
+    });

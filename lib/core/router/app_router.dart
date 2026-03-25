@@ -5,7 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/academic_profile/presentation/pages/academic_profile_form_page.dart';
+import '../../features/academic_profile/presentation/pages/academic_profile_import_page.dart';
 import '../../features/academic_profile/presentation/pages/academic_profile_page.dart';
+import '../../features/auth/presentation/pages/forgot_password_page.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/complementary_hours/presentation/widgets/complementary_activities_page.dart';
 import '../../features/complementary_hours/presentation/widgets/complementary_activity_form_page.dart';
 import '../../features/course_subjects/presentation/pages/course_subject_detail_page.dart';
@@ -30,10 +34,42 @@ import '../../shared/widgets/app_shell.dart';
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
+    refreshListenable: ref.watch(authRouterRefreshProvider),
+    redirect: (context, state) {
+      final authState = ref.read(authControllerProvider);
+      final location = state.uri.path;
+      final isSplashRoute = location == '/splash';
+      final isAuthRoute = location == '/login' || location == '/forgot-password';
+
+      if (authState.isLoading) {
+        return isSplashRoute ? null : '/splash';
+      }
+
+      if (authState.isAuthenticated) {
+        if (isSplashRoute || isAuthRoute) {
+          return '/dashboard';
+        }
+        return null;
+      }
+
+      if (isSplashRoute) {
+        return '/login';
+      }
+
+      if (!isAuthRoute) {
+        return '/login';
+      }
+
+      return null;
+    },
     routes: [
+      GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
+      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(
-        path: '/splash',
-        builder: (context, state) => const SplashPage(),
+        path: '/forgot-password',
+        builder: (context, state) => ForgotPasswordPage(
+          prefilledEmail: state.uri.queryParameters['email'],
+        ),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
@@ -54,7 +90,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/subjects/:id',
             builder: (context, state) => CourseSubjectDetailPage(
               subjectId: state.pathParameters['id']!,
-              startLessonOnOpen: state.uri.queryParameters['startLesson'] == '1',
+              startLessonOnOpen:
+                  state.uri.queryParameters['startLesson'] == '1',
             ),
           ),
           GoRoute(
@@ -84,10 +121,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AcademicProfileFormPage(),
       ),
       GoRoute(
+        path: '/profile/import',
+        builder: (context, state) => const AcademicProfileImportPage(),
+      ),
+      GoRoute(
         path: '/profile/:id/edit',
-        builder: (context, state) => AcademicProfileFormPage(
-          profileId: state.pathParameters['id'],
-        ),
+        builder: (context, state) =>
+            AcademicProfileFormPage(profileId: state.pathParameters['id']),
       ),
       GoRoute(
         path: '/subjects/new',
@@ -95,9 +135,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/subjects/:id/edit',
-        builder: (context, state) => CourseSubjectFormPage(
-          subjectId: state.pathParameters['id'],
-        ),
+        builder: (context, state) =>
+            CourseSubjectFormPage(subjectId: state.pathParameters['id']),
       ),
       GoRoute(
         path: '/subjects/:subjectId/lessons/new',
@@ -106,9 +145,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final rawHours = state.uri.queryParameters['lessonHours'];
           return CourseSubjectLessonFormPage(
             subjectId: state.pathParameters['subjectId']!,
-            initialLessonDate: rawDate == null ? null : DateTime.tryParse(rawDate),
-            suggestedLessonHours:
-                rawHours == null ? null : double.tryParse(rawHours),
+            initialLessonDate: rawDate == null
+                ? null
+                : DateTime.tryParse(rawDate),
+            suggestedLessonHours: rawHours == null
+                ? null
+                : double.tryParse(rawHours),
           );
         },
       ),
@@ -135,9 +177,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/internships/:id/edit',
-        builder: (context, state) => InternshipFormPage(
-          internshipId: state.pathParameters['id'],
-        ),
+        builder: (context, state) =>
+            InternshipFormPage(internshipId: state.pathParameters['id']),
       ),
       GoRoute(
         path: '/extensions/new',
@@ -145,9 +186,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/extensions/:id/edit',
-        builder: (context, state) => ExtensionActivityFormPage(
-          activityId: state.pathParameters['id'],
-        ),
+        builder: (context, state) =>
+            ExtensionActivityFormPage(activityId: state.pathParameters['id']),
       ),
       GoRoute(
         path: '/study/subjects/new',
@@ -155,21 +195,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/study/subjects/:id/edit',
-        builder: (context, state) => StudySubjectFormPage(
-          subjectId: state.pathParameters['id'],
-        ),
+        builder: (context, state) =>
+            StudySubjectFormPage(subjectId: state.pathParameters['id']),
       ),
       GoRoute(
         path: '/study/subjects/:subjectId/topics',
-        builder: (context, state) => StudyTopicsPage(
-          subjectId: state.pathParameters['subjectId']!,
-        ),
+        builder: (context, state) =>
+            StudyTopicsPage(subjectId: state.pathParameters['subjectId']!),
       ),
       GoRoute(
         path: '/study/subjects/:subjectId/topics/new',
-        builder: (context, state) => StudyTopicFormPage(
-          subjectId: state.pathParameters['subjectId']!,
-        ),
+        builder: (context, state) =>
+            StudyTopicFormPage(subjectId: state.pathParameters['subjectId']!),
       ),
       GoRoute(
         path: '/study/subjects/:subjectId/topics/:topicId/edit',
@@ -184,9 +221,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/study/tasks/:id/edit',
-        builder: (context, state) => StudyTaskFormPage(
-          taskId: state.pathParameters['id'],
-        ),
+        builder: (context, state) =>
+            StudyTaskFormPage(taskId: state.pathParameters['id']),
       ),
       GoRoute(
         path: '/study/sessions/new',
@@ -194,15 +230,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/study/sessions/:id/edit',
-        builder: (context, state) => StudySessionFormPage(
-          sessionId: state.pathParameters['id'],
-        ),
+        builder: (context, state) =>
+            StudySessionFormPage(sessionId: state.pathParameters['id']),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
-      body: Center(
-        child: Text('Rota nao encontrada: ${state.uri}'),
-      ),
+      body: Center(child: Text('Rota nao encontrada: ${state.uri}')),
     ),
   );
 });

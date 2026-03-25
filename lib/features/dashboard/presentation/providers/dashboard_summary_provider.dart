@@ -14,7 +14,10 @@ final dashboardRepositoryProvider = Provider<DriftDashboardRepository>(
 );
 
 final dashboardSummaryProvider = StreamProvider<DashboardSummary>((ref) {
-  final activeProfileId = ref.watch(activeAcademicProfileProvider).valueOrNull?.id;
+  final activeProfileId = ref
+      .watch(activeAcademicProfileProvider)
+      .valueOrNull
+      ?.id;
   return ref
       .watch(dashboardRepositoryProvider)
       .watchSummary(academicProfileId: activeProfileId);
@@ -22,16 +25,28 @@ final dashboardSummaryProvider = StreamProvider<DashboardSummary>((ref) {
 
 final dashboardAttachmentRemindersProvider =
     StreamProvider<List<AttachmentDeadlineReminder>>((ref) {
-  final activeProfileId = ref.watch(activeAcademicProfileProvider).valueOrNull?.id;
-  return ref
-      .watch(dashboardRepositoryProvider)
-      .watchPendingAttachmentDeadlines(academicProfileId: activeProfileId);
-});
+      final activeProfileId = ref
+          .watch(activeAcademicProfileProvider)
+          .valueOrNull
+          ?.id;
+      if (activeProfileId == null || activeProfileId.isEmpty) {
+        return Stream.value(const <AttachmentDeadlineReminder>[]);
+      }
+      return ref
+          .watch(dashboardRepositoryProvider)
+          .watchPendingAttachmentDeadlines(academicProfileId: activeProfileId);
+    });
 
 final dashboardScheduledSubjectsProvider =
     StreamProvider<List<ScheduledSubjectPrompt>>((ref) {
-  final activeProfileId = ref.watch(activeAcademicProfileProvider).valueOrNull?.id;
-  return ref
-      .watch(dashboardRepositoryProvider)
-      .watchTodayScheduledSubjects(academicProfileId: activeProfileId);
-});
+      final activeProfileId = ref
+          .watch(activeAcademicProfileProvider)
+          .valueOrNull
+          ?.id;
+      if (activeProfileId == null || activeProfileId.isEmpty) {
+        return Stream.value(const <ScheduledSubjectPrompt>[]);
+      }
+      return ref
+          .watch(dashboardRepositoryProvider)
+          .watchTodayScheduledSubjects(academicProfileId: activeProfileId);
+    });
