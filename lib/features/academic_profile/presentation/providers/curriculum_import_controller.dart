@@ -15,6 +15,10 @@ import '../../domain/entities/curriculum_import_preview.dart';
 import '../../domain/entities/curriculum_import_subject_draft.dart';
 import 'academic_profile_provider.dart';
 
+/// Aplica no banco o preview gerado pela leitura do PPC/PDF.
+///
+/// O parser apenas sugere dados. Este controller decide se cria um perfil novo,
+/// atualiza um perfil existente, preserva status do aluno e liga pre-requisitos.
 class CurriculumImportController
     extends AutoDisposeNotifier<FormSubmissionState> {
   @override
@@ -218,7 +222,8 @@ class CurriculumImportController
             : plan.existingSubject?.creditStatus ??
                   CourseSubjectCreditStatus.none,
         creditMatchScore:
-            plan.draft.creditMatchScore ?? plan.existingSubject?.creditMatchScore,
+            plan.draft.creditMatchScore ??
+            plan.existingSubject?.creditMatchScore,
         syllabus:
             _nullIfBlank(plan.draft.syllabus) ?? plan.existingSubject?.syllabus,
         notes: plan.existingSubject?.notes ?? _nullIfBlank(plan.draft.notes),

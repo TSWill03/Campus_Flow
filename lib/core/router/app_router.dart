@@ -31,6 +31,12 @@ import '../../features/study_manager/presentation/pages/study_topic_form_page.da
 import '../../features/study_manager/presentation/pages/study_topics_page.dart';
 import '../../shared/widgets/app_shell.dart';
 
+/// Centraliza as rotas do app e a protecao por autenticacao.
+///
+/// Para apresentar o projeto, este arquivo mostra bem a decisao de manter uma
+/// navegacao unica para mobile, desktop e web. Rotas dentro do ShellRoute usam
+/// a barra lateral/topo do app; rotas de formulario ficam fora para poder abrir
+/// como telas de foco.
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
@@ -39,8 +45,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final authState = ref.read(authControllerProvider);
       final location = state.uri.path;
       final isSplashRoute = location == '/splash';
-      final isAuthRoute = location == '/login' || location == '/forgot-password';
+      final isAuthRoute =
+          location == '/login' || location == '/forgot-password';
 
+      // Enquanto a sessao segura esta carregando, qualquer rota volta para o
+      // splash. Depois disso, usuarios logados saem do login e usuarios sem
+      // sessao nao acessam telas internas.
       if (authState.isLoading) {
         return isSplashRoute ? null : '/splash';
       }

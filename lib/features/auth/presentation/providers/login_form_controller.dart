@@ -5,8 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/error/app_exception.dart';
 import '../../../../shared/widgets/form_submission_state.dart';
 import '../../domain/entities/auth_action_result.dart';
+import '../../domain/entities/google_auth_identity.dart';
 import 'auth_providers.dart';
 
+/// Controller do formulario de login/cadastro.
+///
+/// Ele mantem loading/success/error fora da pagina visual. Assim a tela so
+/// renderiza estado, enquanto a regra de autenticacao fica testavel aqui.
 class LoginFormController extends AutoDisposeNotifier<FormSubmissionState> {
   @override
   FormSubmissionState build() => const FormSubmissionState.idle();
@@ -18,10 +23,9 @@ class LoginFormController extends AutoDisposeNotifier<FormSubmissionState> {
     state = const FormSubmissionState.loading();
 
     try {
-      final result = await ref.read(authRepositoryProvider).signInWithPassword(
-            email: email,
-            password: password,
-          );
+      final result = await ref
+          .read(authRepositoryProvider)
+          .signInWithPassword(email: email, password: password);
       await ref.read(authControllerProvider.notifier).refresh();
       state = FormSubmissionState.success(result.message);
       return result;
@@ -43,7 +47,9 @@ class LoginFormController extends AutoDisposeNotifier<FormSubmissionState> {
     state = const FormSubmissionState.loading();
 
     try {
-      final result = await ref.read(authRepositoryProvider).registerWithPassword(
+      final result = await ref
+          .read(authRepositoryProvider)
+          .registerWithPassword(
             displayName: displayName,
             email: email,
             password: password,
@@ -66,6 +72,28 @@ class LoginFormController extends AutoDisposeNotifier<FormSubmissionState> {
 
     try {
       final result = await ref.read(authRepositoryProvider).signInWithGoogle();
+      await ref.read(authControllerProvider.notifier).refresh();
+      state = FormSubmissionState.success(result.message);
+      return result;
+    } catch (error) {
+      state = FormSubmissionState.error(
+        error is AppException
+            ? error.message
+            : 'Nao foi possivel entrar com Google: $error',
+      );
+      return null;
+    }
+  }
+
+  Future<AuthActionResult?> signInWithGoogleIdentity(
+    GoogleAuthIdentity identity,
+  ) async {
+    state = const FormSubmissionState.loading();
+
+    try {
+      final result = await ref
+          .read(authRepositoryProvider)
+          .signInWithGoogleIdentity(identity);
       await ref.read(authControllerProvider.notifier).refresh();
       state = FormSubmissionState.success(result.message);
       return result;

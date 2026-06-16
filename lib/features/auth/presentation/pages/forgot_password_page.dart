@@ -9,10 +9,7 @@ import '../providers/auth_providers.dart';
 import '../providers/password_recovery_controller.dart';
 
 class ForgotPasswordPage extends ConsumerStatefulWidget {
-  const ForgotPasswordPage({
-    super.key,
-    this.prefilledEmail,
-  });
+  const ForgotPasswordPage({super.key, this.prefilledEmail});
 
   final String? prefilledEmail;
 
@@ -51,22 +48,22 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     final authState = ref.watch(authControllerProvider);
     final submission = ref.watch(passwordRecoveryControllerProvider);
 
-    ref.listen<FormSubmissionState>(
-      passwordRecoveryControllerProvider,
-      (previous, next) {
-        if (!mounted || next.message == null || previous?.message == next.message) {
-          return;
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.message!)),
-        );
-      },
-    );
+    ref.listen<FormSubmissionState>(passwordRecoveryControllerProvider, (
+      previous,
+      next,
+    ) {
+      if (!mounted ||
+          next.message == null ||
+          previous?.message == next.message) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(next.message!)));
+    });
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Recuperar acesso'),
-      ),
+      appBar: AppBar(title: const Text('Recuperar acesso')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
@@ -150,6 +147,19 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                             const SizedBox(height: 20),
                             SizedBox(
                               width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: submission.isLoading
+                                    ? null
+                                    : _requestResetToken,
+                                icon: const Icon(Icons.mark_email_read_rounded),
+                                label: const Text(
+                                  'Solicitar codigo ao servidor',
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
                               child: FilledButton.icon(
                                 onPressed: submission.isLoading
                                     ? null
@@ -170,7 +180,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                             SizedBox(
                               width: double.infinity,
                               child: OutlinedButton.icon(
-                                onPressed: submission.isLoading ||
+                                onPressed:
+                                    submission.isLoading ||
                                         !authState.googleSupported ||
                                         !authState.googleConfigured
                                     ? null
@@ -179,7 +190,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                                 label: const Text('Redefinir usando Google'),
                               ),
                             ),
-                            if (authState.googleAvailabilityMessage != null) ...[
+                            if (authState.googleAvailabilityMessage !=
+                                null) ...[
                               const SizedBox(height: 8),
                               Text(
                                 authState.googleAvailabilityMessage!,
@@ -224,11 +236,45 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
       return;
     }
 
-    await ref.read(passwordRecoveryControllerProvider.notifier).resetWithRecoveryCode(
+    await ref
+        .read(passwordRecoveryControllerProvider.notifier)
+        .resetWithRecoveryCode(
           email: _emailController.text.trim(),
           recoveryCode: _recoveryCodeController.text.trim(),
           newPassword: _newPasswordController.text,
         );
+  }
+
+  Future<void> _requestResetToken() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Informe um email valido.')));
+      return;
+    }
+
+    final result = await ref
+        .read(passwordRecoveryControllerProvider.notifier)
+        .requestReset(email: email);
+    if (!mounted || result?.recoveryCode == null) {
+      return;
+    }
+
+    _recoveryCodeController.text = result!.recoveryCode!;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Token de desenvolvimento'),
+        content: SelectableText(result.recoveryCode!),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Usar este token'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _resetWithGoogle() async {
@@ -236,7 +282,9 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
       return;
     }
 
-    await ref.read(passwordRecoveryControllerProvider.notifier).resetWithGoogle(
+    await ref
+        .read(passwordRecoveryControllerProvider.notifier)
+        .resetWithGoogle(
           email: _emailController.text.trim(),
           newPassword: _newPasswordController.text,
         );

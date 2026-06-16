@@ -5,6 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_database.dart';
 
+// Estes providers sao preenchidos em `main.dart`. Em testes, eles tambem podem
+// ser substituidos por instancias em memoria, mantendo as features desacopladas
+// de construtores globais.
 final sharedPreferencesProvider = Provider<SharedPreferences>(
   (ref) => throw UnimplementedError('SharedPreferences nao inicializado.'),
 );

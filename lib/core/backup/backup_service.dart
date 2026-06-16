@@ -40,6 +40,8 @@ import 'backup_bundle.dart';
 
 enum BackupImportMode { replaceAll, merge }
 
+/// Erro de validacao usado para mostrar mensagens amigaveis quando o usuario
+/// tenta importar um JSON que nao pertence ao CampusFlow ou veio de schema novo.
 class BackupValidationException implements Exception {
   const BackupValidationException(this.message);
 
@@ -84,6 +86,8 @@ class BackupService {
   final StudyManagerRepository _studyManagerRepository;
 
   Future<String?> exportBackup() async {
+    // O backup e propositalmente legivel em JSON para facilitar transferencia
+    // manual entre dispositivos enquanto o backend/sync ainda evolui.
     final bundle = await _buildBundle();
     final fileName =
         'campusflow_backup_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.json';
@@ -124,6 +128,8 @@ class BackupService {
     final bundle = _parseBundle(bytes);
     _validateBundle(bundle);
 
+    // Antes de substituir tudo, o app salva um restore point local. Assim o
+    // usuario consegue voltar atras se escolheu o arquivo errado.
     if (mode == BackupImportMode.replaceAll) {
       await _saveTemporaryRestorePoint();
     }
@@ -164,6 +170,8 @@ class BackupService {
   }
 
   Future<BackupBundle> _buildBundle() async {
+    // O bundle junta todos os repositorios de dominio em uma estrutura unica.
+    // Isso deixa o formato de backup independente das tabelas internas do Drift.
     return BackupBundle(
       schemaVersion: _database.schemaVersion,
       exportedAt: DateTime.now(),

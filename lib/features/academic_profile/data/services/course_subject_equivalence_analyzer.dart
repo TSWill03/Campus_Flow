@@ -17,6 +17,9 @@ final courseSubjectEquivalenceAnalyzerProvider =
 class CourseSubjectEquivalenceAnalyzer {
   const CourseSubjectEquivalenceAnalyzer();
 
+  // Limiares escolhidos para reduzir falsos positivos: nome igual/pouco
+  // diferente ja sugere match, mas ementa e carga horaria ajudam nos casos em
+  // que cursos diferentes usam nomes diferentes para conteudos parecidos.
   static const _syllabusSimilarityThreshold = 0.8;
   static const _nameSimilarityThreshold = 0.92;
   static const _combinedNameThreshold = 0.72;

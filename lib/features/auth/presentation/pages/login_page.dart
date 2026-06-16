@@ -1,17 +1,18 @@
 // Signature: dev.tswicolly03
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../domain/entities/google_auth_identity.dart';
 import '../../../../shared/widgets/form_submission_state.dart';
 import '../providers/auth_providers.dart';
 import '../providers/login_form_controller.dart';
+import '../widgets/google_sign_in_button.dart';
 
-enum _LoginMode {
-  signIn,
-  register,
-}
+enum _LoginMode { signIn, register }
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -26,6 +27,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
   late final TextEditingController _confirmPasswordController;
+  StreamSubscription<GoogleAuthIdentity>? _googleAuthSubscription;
   _LoginMode? _mode;
   bool _modeTouched = false;
 
@@ -36,6 +38,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
+    final googleAuthService = ref.read(googleAuthServiceProvider);
+    _googleAuthSubscription = googleAuthService.authenticationEvents.listen(
+      _signInWithGoogleIdentity,
+    );
+    if (googleAuthService.capability.isSupported &&
+        googleAuthService.capability.isConfigured) {
+      unawaited(googleAuthService.initialize());
+    }
   }
 
   @override
@@ -44,6 +54,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _googleAuthSubscription?.cancel();
     super.dispose();
   }
 
@@ -54,13 +65,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final submission = ref.watch(loginFormControllerProvider);
     final effectiveMode = _resolveMode(authState.hasAccount);
 
-    ref.listen<FormSubmissionState>(loginFormControllerProvider, (previous, next) {
-      if (!mounted || next.message == null || previous?.message == next.message) {
+    ref.listen<FormSubmissionState>(loginFormControllerProvider, (
+      previous,
+      next,
+    ) {
+      if (!mounted ||
+          next.message == null ||
+          previous?.message == next.message) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(next.message!)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(next.message!)));
     });
 
     if (_emailController.text.trim().isEmpty && authState.account != null) {
@@ -94,11 +110,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Expanded(
-                          child: _BrandPanel(
-                            showCompactLayout: !isWide,
-                          ),
+                          child: _BrandPanel(showCompactLayout: !isWide),
                         ),
-                        SizedBox(width: isWide ? 24 : 0, height: isWide ? 0 : 24),
+                        SizedBox(
+                          width: isWide ? 24 : 0,
+                          height: isWide ? 0 : 24,
+                        ),
                         Expanded(
                           child: Card(
                             elevation: 0,
@@ -111,21 +128,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 child: Form(
                                   key: _formKey,
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         effectiveMode == _LoginMode.signIn
                                             ? 'Entrar no CampusFlow'
-                                            : 'Criar conta local segura',
-                                        style: theme.textTheme.headlineSmall?.copyWith(
-                                          fontWeight: FontWeight.w700,
-                                        ),
+                                            : 'Criar conta segura',
+                                        style: theme.textTheme.headlineSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
                                         effectiveMode == _LoginMode.signIn
-                                            ? 'Desbloqueie seus dados locais com email e senha ou use a conta Google vinculada.'
-                                            : 'Sua senha fica protegida em armazenamento seguro do dispositivo, e o app gera um codigo de recuperacao para redefinicao futura.',
+                                            ? 'Entre com email e senha ou use uma conta Google vinculada ao servidor.'
+                                            : 'Sua conta sera criada no servidor do CampusFlow para sincronizar seus dados entre dispositivos.',
                                       ),
                                       const SizedBox(height: 24),
                                       SegmentedButton<_LoginMode>(
@@ -148,13 +167,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                         },
                                       ),
                                       const SizedBox(height: 20),
-                                      if (effectiveMode == _LoginMode.register) ...[
+                                      if (effectiveMode ==
+                                          _LoginMode.register) ...[
                                         TextFormField(
                                           controller: _displayNameController,
-                                          textCapitalization: TextCapitalization.words,
+                                          textCapitalization:
+                                              TextCapitalization.words,
                                           decoration: const InputDecoration(
                                             labelText: 'Seu nome',
-                                            prefixIcon: Icon(Icons.person_rounded),
+                                            prefixIcon: Icon(
+                                              Icons.person_rounded,
+                                            ),
                                           ),
                                           validator: (value) {
                                             if ((value ?? '').trim().isEmpty) {
@@ -167,14 +190,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                       ],
                                       TextFormField(
                                         controller: _emailController,
-                                        keyboardType: TextInputType.emailAddress,
+                                        keyboardType:
+                                            TextInputType.emailAddress,
                                         decoration: const InputDecoration(
                                           labelText: 'Email',
-                                          prefixIcon: Icon(Icons.alternate_email_rounded),
+                                          prefixIcon: Icon(
+                                            Icons.alternate_email_rounded,
+                                          ),
                                         ),
                                         validator: (value) {
                                           final trimmed = (value ?? '').trim();
-                                          if (trimmed.isEmpty || !trimmed.contains('@')) {
+                                          if (trimmed.isEmpty ||
+                                              !trimmed.contains('@')) {
                                             return 'Informe um email valido.';
                                           }
                                           return null;
@@ -196,17 +223,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                           return null;
                                         },
                                       ),
-                                      if (effectiveMode == _LoginMode.register) ...[
+                                      if (effectiveMode ==
+                                          _LoginMode.register) ...[
                                         const SizedBox(height: 16),
                                         TextFormField(
-                                          controller: _confirmPasswordController,
+                                          controller:
+                                              _confirmPasswordController,
                                           obscureText: true,
                                           decoration: const InputDecoration(
                                             labelText: 'Confirmar senha',
-                                            prefixIcon: Icon(Icons.verified_user_rounded),
+                                            prefixIcon: Icon(
+                                              Icons.verified_user_rounded,
+                                            ),
                                           ),
                                           validator: (value) {
-                                            if (value != _passwordController.text) {
+                                            if (value !=
+                                                _passwordController.text) {
                                               return 'As senhas precisam ser iguais.';
                                             }
                                             return null;
@@ -214,20 +246,30 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                         ),
                                       ],
                                       const SizedBox(height: 20),
-                                      if (authState.account?.hasPassword == false &&
+                                      if (authState.account?.hasPassword ==
+                                              false &&
                                           effectiveMode == _LoginMode.signIn)
                                         Padding(
-                                          padding: const EdgeInsets.only(bottom: 16),
+                                          padding: const EdgeInsets.only(
+                                            bottom: 16,
+                                          ),
                                           child: Card(
-                                            color: theme.colorScheme.secondaryContainer,
+                                            color: theme
+                                                .colorScheme
+                                                .secondaryContainer,
                                             elevation: 0,
                                             child: Padding(
                                               padding: const EdgeInsets.all(16),
                                               child: Text(
                                                 'Esta conta foi criada sem senha local. Entre com Google ou use "Esqueceu sua senha?" para definir uma senha agora.',
-                                                style: theme.textTheme.bodyMedium?.copyWith(
-                                                  color: theme.colorScheme.onSecondaryContainer,
-                                                ),
+                                                style: theme
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      color: theme
+                                                          .colorScheme
+                                                          .onSecondaryContainer,
+                                                    ),
                                               ),
                                             ),
                                           ),
@@ -242,12 +284,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                               ? const SizedBox(
                                                   height: 18,
                                                   width: 18,
-                                                  child: CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                  ),
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
                                                 )
                                               : Icon(
-                                                  effectiveMode == _LoginMode.signIn
+                                                  effectiveMode ==
+                                                          _LoginMode.signIn
                                                       ? Icons.login_rounded
                                                       : Icons.shield_rounded,
                                                 ),
@@ -259,25 +303,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                         ),
                                       ),
                                       const SizedBox(height: 12),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: OutlinedButton.icon(
-                                          onPressed: submission.isLoading ||
-                                                  !authState.googleSupported ||
-                                                  !authState.googleConfigured
-                                              ? null
-                                              : _signInWithGoogle,
-                                          icon: const Icon(Icons.g_mobiledata_rounded),
-                                          label: const Text('Continuar com Google'),
-                                        ),
+                                      GoogleSignInButton(
+                                        enabled:
+                                            authState.googleSupported &&
+                                            authState.googleConfigured,
+                                        isLoading: submission.isLoading,
+                                        onPressed: _signInWithGoogle,
                                       ),
-                                      if (authState.googleAvailabilityMessage != null) ...[
+                                      if (authState.googleAvailabilityMessage !=
+                                          null) ...[
                                         const SizedBox(height: 8),
                                         Text(
                                           authState.googleAvailabilityMessage!,
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            color: theme.colorScheme.onSurfaceVariant,
-                                          ),
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
                                         ),
                                       ],
                                       const SizedBox(height: 16),
@@ -287,23 +330,29 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                             onPressed: submission.isLoading
                                                 ? null
                                                 : () => context.go(
-                                                      '/forgot-password'
-                                                      '?email=${Uri.encodeComponent(_emailController.text.trim())}',
-                                                    ),
-                                            child: const Text('Esqueceu sua senha?'),
+                                                    '/forgot-password'
+                                                    '?email=${Uri.encodeComponent(_emailController.text.trim())}',
+                                                  ),
+                                            child: const Text(
+                                              'Esqueceu sua senha?',
+                                            ),
                                           ),
                                           const Spacer(),
-                                          if (effectiveMode == _LoginMode.signIn)
+                                          if (effectiveMode ==
+                                              _LoginMode.signIn)
                                             TextButton(
                                               onPressed: submission.isLoading
                                                   ? null
                                                   : () {
                                                       setState(() {
                                                         _modeTouched = true;
-                                                        _mode = _LoginMode.register;
+                                                        _mode =
+                                                            _LoginMode.register;
                                                       });
                                                     },
-                                              child: const Text('Primeiro acesso'),
+                                              child: const Text(
+                                                'Primeiro acesso',
+                                              ),
                                             ),
                                         ],
                                       ),
@@ -311,9 +360,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                         const SizedBox(height: 8),
                                         Text(
                                           authState.errorMessage!,
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            color: theme.colorScheme.error,
-                                          ),
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: theme.colorScheme.error,
+                                              ),
                                         ),
                                       ],
                                     ],
@@ -349,14 +399,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
 
     if (mode == _LoginMode.signIn) {
-      await ref.read(loginFormControllerProvider.notifier).signInWithPassword(
+      await ref
+          .read(loginFormControllerProvider.notifier)
+          .signInWithPassword(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
       return;
     }
 
-    final result = await ref.read(loginFormControllerProvider.notifier).register(
+    final result = await ref
+        .read(loginFormControllerProvider.notifier)
+        .register(
           displayName: _displayNameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
@@ -374,8 +428,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _signInWithGoogle() async {
-    final result =
-        await ref.read(loginFormControllerProvider.notifier).signInWithGoogle();
+    final result = await ref
+        .read(loginFormControllerProvider.notifier)
+        .signInWithGoogle();
+    if (!mounted || result?.recoveryCode == null) {
+      return;
+    }
+
+    await _showRecoveryCodeDialog(
+      title: 'Conta criada com Google',
+      description:
+          'Sua conta Google foi vinculada. Guarde este codigo para recuperar ou definir uma senha local depois.',
+      recoveryCode: result!.recoveryCode!,
+    );
+  }
+
+  Future<void> _signInWithGoogleIdentity(GoogleAuthIdentity identity) async {
+    final result = await ref
+        .read(loginFormControllerProvider.notifier)
+        .signInWithGoogleIdentity(identity);
     if (!mounted || result?.recoveryCode == null) {
       return;
     }
@@ -407,9 +478,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             SelectableText(
               recoveryCode,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.1,
-                  ),
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.1,
+              ),
             ),
           ],
         ),
@@ -425,9 +496,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 }
 
 class _BrandPanel extends StatelessWidget {
-  const _BrandPanel({
-    required this.showCompactLayout,
-  });
+  const _BrandPanel({required this.showCompactLayout});
 
   final bool showCompactLayout;
 
@@ -442,16 +511,14 @@ class _BrandPanel extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.secondary,
-          ],
+          colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment:
-            showCompactLayout ? MainAxisAlignment.start : MainAxisAlignment.center,
+        mainAxisAlignment: showCompactLayout
+            ? MainAxisAlignment.start
+            : MainAxisAlignment.center,
         children: [
           Container(
             width: 72,
@@ -501,10 +568,7 @@ class _BrandPanel extends StatelessWidget {
 }
 
 class _FeatureBullet extends StatelessWidget {
-  const _FeatureBullet({
-    required this.text,
-    required this.color,
-  });
+  const _FeatureBullet({required this.text, required this.color});
 
   final String text;
   final Color color;
@@ -522,8 +586,8 @@ class _FeatureBullet extends StatelessWidget {
             child: Text(
               text,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: color.withValues(alpha: 0.92),
-                  ),
+                color: color.withValues(alpha: 0.92),
+              ),
             ),
           ),
         ],

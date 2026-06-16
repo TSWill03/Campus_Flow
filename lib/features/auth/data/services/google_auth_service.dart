@@ -1,5 +1,7 @@
 // Signature: dev.tswicolly03
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -16,10 +18,16 @@ class GoogleAuthCapability {
   final bool isSupported;
   final bool isConfigured;
   final String? message;
+
+  bool get requiresOfficialButton => kIsWeb && isSupported && isConfigured;
 }
 
 abstract class GoogleAuthService {
   GoogleAuthCapability get capability;
+
+  Stream<GoogleAuthIdentity> get authenticationEvents;
+
+  Future<void> initialize();
 
   Future<GoogleAuthIdentity> authenticate();
 
@@ -31,16 +39,27 @@ class PlatformGoogleAuthService implements GoogleAuthService {
     GoogleSignIn? googleSignIn,
     String? webClientId,
     String? serverClientId,
-  })  : _googleSignIn = googleSignIn ?? GoogleSignIn.instance,
-        _webClientId = webClientId ?? const String.fromEnvironment('GOOGLE_WEB_CLIENT_ID'),
-        _serverClientId =
-            serverClientId ?? const String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+  }) : _googleSignIn = googleSignIn ?? GoogleSignIn.instance,
+       _webClientId =
+           webClientId ?? const String.fromEnvironment('GOOGLE_WEB_CLIENT_ID'),
+       _serverClientId =
+           serverClientId ??
+           const String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID'),
+       _iosClientId = const String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
 
   final GoogleSignIn _googleSignIn;
   final String _webClientId;
   final String _serverClientId;
+  final String _iosClientId;
+  final StreamController<GoogleAuthIdentity> _authenticationController =
+      StreamController<GoogleAuthIdentity>.broadcast();
 
   Future<void>? _initialization;
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _authSubscription;
+
+  @override
+  Stream<GoogleAuthIdentity> get authenticationEvents =>
+      _authenticationController.stream;
 
   @override
   GoogleAuthCapability get capability {
@@ -53,19 +72,42 @@ class PlatformGoogleAuthService implements GoogleAuthService {
               'Defina GOOGLE_WEB_CLIENT_ID para ativar o login com Google na Web.',
         );
       }
-      return const GoogleAuthCapability(
-        isSupported: true,
-        isConfigured: true,
-      );
+      return const GoogleAuthCapability(isSupported: true, isConfigured: true);
     }
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
+        if (_serverClientId.trim().isEmpty) {
+          return const GoogleAuthCapability(
+            isSupported: true,
+            isConfigured: false,
+            message:
+                'Defina GOOGLE_SERVER_CLIENT_ID com o Client ID Web do Google para ativar o login no Android.',
+          );
+        }
         return const GoogleAuthCapability(
           isSupported: true,
           isConfigured: true,
+        );
+      case TargetPlatform.iOS:
+        if (_iosClientId.trim().isEmpty || _serverClientId.trim().isEmpty) {
+          return const GoogleAuthCapability(
+            isSupported: true,
+            isConfigured: false,
+            message:
+                'Defina GOOGLE_IOS_CLIENT_ID e GOOGLE_SERVER_CLIENT_ID para ativar o login no iOS.',
+          );
+        }
+        return const GoogleAuthCapability(
+          isSupported: true,
+          isConfigured: true,
+        );
+      case TargetPlatform.macOS:
+        return const GoogleAuthCapability(
+          isSupported: false,
+          isConfigured: false,
+          message:
+              'O login com Google ainda nao esta configurado para macOS neste projeto.',
         );
       case TargetPlatform.windows:
       case TargetPlatform.linux:
@@ -85,6 +127,9 @@ class PlatformGoogleAuthService implements GoogleAuthService {
   }
 
   @override
+  Future<void> initialize() => _initializeIfNeeded();
+
+  @override
   Future<GoogleAuthIdentity> authenticate() async {
     final currentCapability = capability;
     if (!currentCapability.isSupported) {
@@ -101,16 +146,15 @@ class PlatformGoogleAuthService implements GoogleAuthService {
     }
 
     await _initializeIfNeeded();
+    if (!_googleSignIn.supportsAuthenticate()) {
+      throw const AppException(
+        'Nesta plataforma, use o botao oficial do Google exibido na tela.',
+      );
+    }
 
     try {
       final account = await _googleSignIn.authenticate();
-      return GoogleAuthIdentity(
-        email: account.email.trim().toLowerCase(),
-        displayName: (account.displayName ?? '').trim().isEmpty
-            ? account.email.split('@').first
-            : account.displayName!.trim(),
-        photoUrl: account.photoUrl,
-      );
+      return _identityFromAccount(account);
     } catch (error) {
       if (error is AppException) {
         rethrow;
@@ -129,11 +173,42 @@ class PlatformGoogleAuthService implements GoogleAuthService {
   }
 
   Future<void> _initializeIfNeeded() {
-    return _initialization ??= _googleSignIn.initialize(
-      clientId: _webClientId.trim().isEmpty ? null : _webClientId.trim(),
-      serverClientId: _serverClientId.trim().isEmpty
-          ? null
-          : _serverClientId.trim(),
+    return _initialization ??= () async {
+      await _googleSignIn.initialize(
+        clientId: _clientIdForCurrentPlatform(),
+        serverClientId: kIsWeb ? null : _nullableTrimmed(_serverClientId),
+      );
+      _authSubscription ??= _googleSignIn.authenticationEvents.listen((event) {
+        if (event is GoogleSignInAuthenticationEventSignIn) {
+          _authenticationController.add(_identityFromAccount(event.user));
+        }
+      }, onError: _authenticationController.addError);
+    }();
+  }
+
+  String? _clientIdForCurrentPlatform() {
+    if (kIsWeb) {
+      return _nullableTrimmed(_webClientId);
+    }
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      return _nullableTrimmed(_iosClientId);
+    }
+    return null;
+  }
+
+  String? _nullableTrimmed(String value) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  GoogleAuthIdentity _identityFromAccount(GoogleSignInAccount account) {
+    return GoogleAuthIdentity(
+      email: account.email.trim().toLowerCase(),
+      displayName: (account.displayName ?? '').trim().isEmpty
+          ? account.email.split('@').first
+          : account.displayName!.trim(),
+      photoUrl: account.photoUrl,
+      idToken: account.authentication.idToken,
     );
   }
 }

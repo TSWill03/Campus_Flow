@@ -11,6 +11,9 @@ import 'core/database/database_providers.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Dependencias globais sao carregadas antes do app subir para que Riverpod
+  // consiga entregar a mesma instancia de preferencias e banco para todas as
+  // features. Isso evita singletons soltos e facilita testes com overrides.
   final sharedPreferences = await SharedPreferences.getInstance();
   final database = AppDatabase();
 

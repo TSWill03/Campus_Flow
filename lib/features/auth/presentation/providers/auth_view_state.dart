@@ -15,13 +15,13 @@ class AuthViewState {
   });
 
   const AuthViewState.loading()
-      : isLoading = true,
-        account = null,
-        session = null,
-        googleSupported = false,
-        googleConfigured = false,
-        googleAvailabilityMessage = null,
-        errorMessage = null;
+    : isLoading = true,
+      account = null,
+      session = null,
+      googleSupported = false,
+      googleConfigured = false,
+      googleAvailabilityMessage = null,
+      errorMessage = null;
 
   final bool isLoading;
   final AuthAccount? account;

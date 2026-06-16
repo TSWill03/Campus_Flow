@@ -1,0 +1,15 @@
+# Signature: dev.tswicolly03
+
+[Unit]
+Description=CampusFlow firewall rules for Caddy HTTP/HTTPS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c '/usr/sbin/iptables -C INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT 2>/dev/null || /usr/sbin/iptables -I INPUT 6 -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT'
+ExecStart=/bin/sh -c '/usr/sbin/iptables -C INPUT -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT 2>/dev/null || /usr/sbin/iptables -I INPUT 6 -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT'
+
+[Install]
+WantedBy=multi-user.target

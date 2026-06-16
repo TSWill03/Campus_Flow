@@ -1,0 +1,20 @@
+# Signature: dev.tswicolly03
+
+[Unit]
+Description=CampusFlow API
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/campusflow/backend/current
+EnvironmentFile=/opt/campusflow/backend/.env
+ExecStart=/usr/bin/node dist/server.js
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

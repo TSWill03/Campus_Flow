@@ -5,9 +5,11 @@ class GoogleAuthIdentity {
     required this.email,
     required this.displayName,
     this.photoUrl,
+    this.idToken,
   });
 
   final String email;
   final String displayName;
   final String? photoUrl;
+  final String? idToken;
 }

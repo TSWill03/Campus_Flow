@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String               @id @default(uuid())
+  email             String               @unique
+  name              String
+  passwordHash      String?
+  googleSubject     String?              @unique
+  googleEmail       String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  refreshTokens     RefreshToken[]
+  passwordResets    PasswordResetToken[]
+  syncDevices       SyncDevice[]
+  syncEntities      SyncEntity[]
+  fileObjects       FileObject[]
+
+  @@index([email])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model SyncDevice {
+  id         String   @id @default(uuid())
+  userId     String
+  clientId   String
+  name       String?
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clientId])
+  @@index([userId])
+}
+
+model SyncEntity {
+  id              String   @id @default(uuid())
+  userId          String
+  entityType      String
+  localId         String
+  version         Int      @default(1)
+  isDeleted       Boolean  @default(false)
+  payload         Json
+  clientUpdatedAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entityType, localId])
+  @@index([userId, updatedAt])
+  @@index([userId, entityType])
+}
+
+model FileObject {
+  id          String    @id @default(uuid())
+  userId      String
+  entityType  String
+  entityId    String
+  category    String?
+  fileName    String
+  mimeType    String
+  sizeBytes   Int
+  storageKey  String
+  checksum    String?
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, entityType, entityId])
+  @@index([userId, deletedAt])
+}

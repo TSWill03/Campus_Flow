@@ -27,17 +27,20 @@ class _MemoryAuthSecureStore implements AuthSecureStore {
 }
 
 class _FakeGoogleAuthService implements GoogleAuthService {
-  _FakeGoogleAuthService({
-    required this.identity,
-  });
+  _FakeGoogleAuthService({required this.identity});
 
   final GoogleAuthIdentity identity;
 
   @override
-  GoogleAuthCapability get capability => GoogleAuthCapability(
-        isSupported: true,
-        isConfigured: true,
-      );
+  Stream<GoogleAuthIdentity> get authenticationEvents =>
+      const Stream<GoogleAuthIdentity>.empty();
+
+  @override
+  GoogleAuthCapability get capability =>
+      GoogleAuthCapability(isSupported: true, isConfigured: true);
+
+  @override
+  Future<void> initialize() async {}
 
   @override
   Future<GoogleAuthIdentity> authenticate() async => identity;

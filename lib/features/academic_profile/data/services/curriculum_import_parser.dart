@@ -11,6 +11,11 @@ final curriculumImportParserProvider = Provider<CurriculumImportParser>(
   (ref) => const CurriculumImportParser(),
 );
 
+/// Parser heuristico para PPCs e matrizes curriculares.
+///
+/// PDFs academicos raramente seguem um padrao unico. Por isso o parser combina
+/// janelas de texto, secoes conhecidas, linhas tabulares e normalizacao para
+/// gerar um preview editavel, em vez de salvar dados automaticamente sem revisao.
 class CurriculumImportParser {
   const CurriculumImportParser();
 
@@ -69,14 +74,13 @@ class CurriculumImportParser {
       cleanedText,
     );
     final focusedLines = curriculumWindows.expand((window) => window).toList();
-    final extractedSubjects =
-        tabularSubjectRows.isNotEmpty
-            ? _resolveTabularPrerequisites(tabularSubjectRows)
-            : _mergeSubjects(
-                _extractLineBasedSubjects(
-                  focusedLines.isNotEmpty ? focusedLines : lines,
-                ),
-              );
+    final extractedSubjects = tabularSubjectRows.isNotEmpty
+        ? _resolveTabularPrerequisites(tabularSubjectRows)
+        : _mergeSubjects(
+            _extractLineBasedSubjects(
+              focusedLines.isNotEmpty ? focusedLines : lines,
+            ),
+          );
     final subjects = _attachSyllabi(
       extractedSubjects.isNotEmpty
           ? extractedSubjects
@@ -342,12 +346,18 @@ class CurriculumImportParser {
       ..._extractAnchoredCompactSections(fullCompactText),
     ];
     final rows = <_TabularSubjectRow>[
-      for (final section in sectionTexts) ..._extractAdsStyleSubjectsFromSection(section),
-      for (final section in sectionTexts) ..._extractAdmStyleSubjectsFromSection(section),
-      for (final section in sectionTexts) ..._extractPedagogyStyleSubjectsFromSection(section),
-      for (final section in sectionTexts) ..._extractAgronomyStyleSubjects(section),
-      for (final window in curriculumWindows) ..._extractLawStyleSubjects(window),
-      for (final window in curriculumWindows) ..._extractAdmStyleSubjects(window),
+      for (final section in sectionTexts)
+        ..._extractAdsStyleSubjectsFromSection(section),
+      for (final section in sectionTexts)
+        ..._extractAdmStyleSubjectsFromSection(section),
+      for (final section in sectionTexts)
+        ..._extractPedagogyStyleSubjectsFromSection(section),
+      for (final section in sectionTexts)
+        ..._extractAgronomyStyleSubjects(section),
+      for (final window in curriculumWindows)
+        ..._extractLawStyleSubjects(window),
+      for (final window in curriculumWindows)
+        ..._extractAdmStyleSubjects(window),
     ];
 
     final deduped = <_TabularSubjectRow>[];
@@ -397,7 +407,9 @@ class CurriculumImportParser {
         );
         if (!overlapsExisting) {
           sections.add(fullCompactText.substring(index, end));
-          consumedRanges.add(_ScoredLineWindow(start: index, end: end, score: 0));
+          consumedRanges.add(
+            _ScoredLineWindow(start: index, end: end, score: 0),
+          );
         }
         searchStart = index + normalizedNeedle.length;
         if (sections.length >= 4) {
@@ -614,7 +626,8 @@ class CurriculumImportParser {
       }
 
       final normalizedTypeHint = _normalize(match.group(5) ?? '');
-      final type = normalizedTypeHint.contains('optativo') ||
+      final type =
+          normalizedTypeHint.contains('optativo') ||
               normalizedTypeHint.contains('livre')
           ? CourseSubjectType.elective
           : _inferSubjectType(_normalize(name));
@@ -680,8 +693,7 @@ class CurriculumImportParser {
             name: name,
             code: match.group(2)?.trim(),
             workloadHours: _parseNumber(match.group(9)) ?? 0,
-            suggestedSemester:
-                _parseNumber(match.group(1)) ?? currentSemester,
+            suggestedSemester: _parseNumber(match.group(1)) ?? currentSemester,
             type: currentType == CourseSubjectType.elective
                 ? CourseSubjectType.elective
                 : _inferSubjectType(_normalize(name)),
@@ -717,9 +729,10 @@ class CurriculumImportParser {
         continue;
       }
 
-      final numbers = RegExp(
-        r'\d{1,3}',
-      ).allMatches(match.group(2) ?? '').map((item) => int.parse(item.group(0)!)).toList();
+      final numbers = RegExp(r'\d{1,3}')
+          .allMatches(match.group(2) ?? '')
+          .map((item) => int.parse(item.group(0)!))
+          .toList();
       final workloadHours = _pickWorkloadFromNumericColumns(numbers);
       if (workloadHours <= 0) {
         continue;
@@ -835,14 +848,17 @@ class CurriculumImportParser {
         if (!_isLikelyImportedSubjectName(name)) {
           continue;
         }
-        final workloadHours = _parseNumber(match.group(match.groupCount - 1)) ?? 0;
+        final workloadHours =
+            _parseNumber(match.group(match.groupCount - 1)) ?? 0;
         if (workloadHours <= 0) {
           continue;
         }
 
         subjects.add(
           _TabularSubjectRow(
-            prerequisiteCodes: _parsePrerequisiteCodes(match.group(match.groupCount) ?? '-'),
+            prerequisiteCodes: _parsePrerequisiteCodes(
+              match.group(match.groupCount) ?? '-',
+            ),
             draft: CurriculumImportSubjectDraft(
               localId: IdGenerator.generate(),
               name: name,
@@ -989,29 +1005,26 @@ class CurriculumImportParser {
           _normalizedSubjectLookupKey(row.draft.code!): row.draft.localId,
     };
     final localIdByName = <String, String>{
-      for (final row in rows) _normalizedSubjectLookupKey(row.draft.name): row.draft.localId,
+      for (final row in rows)
+        _normalizedSubjectLookupKey(row.draft.name): row.draft.localId,
     };
 
-    return rows
-        .map((row) {
-          final prerequisiteIds = <String>{
-            ...row.prerequisiteRowNumbers
-                .map((value) => localIdByRowNumber[value])
-                .whereType<String>(),
-            ...row.prerequisiteCodes
-                .map((value) => localIdByCode[_normalizedSubjectLookupKey(value)])
-                .whereType<String>(),
-            ...row.prerequisiteNames
-                .map((value) => localIdByName[_normalizedSubjectLookupKey(value)])
-                .whereType<String>(),
-          };
+    return rows.map((row) {
+      final prerequisiteIds = <String>{
+        ...row.prerequisiteRowNumbers
+            .map((value) => localIdByRowNumber[value])
+            .whereType<String>(),
+        ...row.prerequisiteCodes
+            .map((value) => localIdByCode[_normalizedSubjectLookupKey(value)])
+            .whereType<String>(),
+        ...row.prerequisiteNames
+            .map((value) => localIdByName[_normalizedSubjectLookupKey(value)])
+            .whereType<String>(),
+      };
 
-          prerequisiteIds.remove(row.draft.localId);
-          return row.draft.copyWith(
-            prerequisiteLocalIds: prerequisiteIds.toList(),
-          );
-        })
-        .toList();
+      prerequisiteIds.remove(row.draft.localId);
+      return row.draft.copyWith(prerequisiteLocalIds: prerequisiteIds.toList());
+    }).toList();
   }
 
   List<int> _parsePrerequisiteRowNumbers(String rawValue) {
@@ -1375,7 +1388,8 @@ class CurriculumImportParser {
       return adjacent;
     }
 
-    final extracted = _extractByPattern(
+    final extracted =
+        _extractByPattern(
           compactText,
           compactNormalized,
           r'(?:unidade|campus)\s+(.+?)\s+(?:inicio\s+do\s+curso|endereco|cidade)',

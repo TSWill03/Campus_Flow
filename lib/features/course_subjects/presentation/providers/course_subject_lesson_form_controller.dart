@@ -14,6 +14,10 @@ import '../../../../shared/widgets/form_submission_state.dart';
 import '../../domain/entities/course_subject_lesson.dart';
 import 'course_subjects_provider.dart';
 
+/// Salva a aula e seus anexos em uma unica acao de formulario.
+///
+/// A aula guarda o resumo pedagogico; os arquivos ficam na camada generica de
+/// anexos para permitir multiplos documentos, categorias e prazos.
 class CourseSubjectLessonFormController
     extends AutoDisposeNotifier<FormSubmissionState> {
   @override
@@ -55,7 +59,11 @@ class CourseSubjectLessonFormController
       );
 
       await ref.read(courseSubjectRepositoryProvider).saveLesson(lesson);
-      await ref.read(attachmentRepositoryProvider).replaceForOwner(
+      // replaceForOwner simplifica edicao: a tela envia a lista final de anexos
+      // e o repositorio decide criar, manter ou remover os registros locais.
+      await ref
+          .read(attachmentRepositoryProvider)
+          .replaceForOwner(
             ownerType: AttachmentOwnerType.courseSubjectLesson,
             ownerId: lesson.id,
             attachments: attachments
@@ -83,14 +91,16 @@ class CourseSubjectLessonFormController
       state = const FormSubmissionState.success('Aula salva com sucesso.');
       return lesson;
     } catch (error) {
-      state = FormSubmissionState.error('Nao foi possivel salvar a aula: $error');
+      state = FormSubmissionState.error(
+        'Nao foi possivel salvar a aula: $error',
+      );
       return null;
     }
   }
 }
 
-final courseSubjectLessonFormControllerProvider = NotifierProvider.autoDispose<
-    CourseSubjectLessonFormController,
-    FormSubmissionState>(
-  CourseSubjectLessonFormController.new,
-);
+final courseSubjectLessonFormControllerProvider =
+    NotifierProvider.autoDispose<
+      CourseSubjectLessonFormController,
+      FormSubmissionState
+    >(CourseSubjectLessonFormController.new);

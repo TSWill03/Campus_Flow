@@ -12,6 +12,25 @@ class PasswordRecoveryController
   @override
   FormSubmissionState build() => const FormSubmissionState.idle();
 
+  Future<AuthActionResult?> requestReset({required String email}) async {
+    state = const FormSubmissionState.loading();
+
+    try {
+      final result = await ref
+          .read(authRepositoryProvider)
+          .requestPasswordReset(email: email);
+      state = FormSubmissionState.success(result.message);
+      return result;
+    } catch (error) {
+      state = FormSubmissionState.error(
+        error is AppException
+            ? error.message
+            : 'Nao foi possivel solicitar recuperacao: $error',
+      );
+      return null;
+    }
+  }
+
   Future<AuthActionResult?> resetWithRecoveryCode({
     required String email,
     required String recoveryCode,
@@ -47,10 +66,9 @@ class PasswordRecoveryController
     state = const FormSubmissionState.loading();
 
     try {
-      final result = await ref.read(authRepositoryProvider).resetPasswordWithGoogle(
-            email: email,
-            newPassword: newPassword,
-          );
+      final result = await ref
+          .read(authRepositoryProvider)
+          .resetPasswordWithGoogle(email: email, newPassword: newPassword);
       await ref.read(authControllerProvider.notifier).refresh();
       state = FormSubmissionState.success(result.message);
       return result;

@@ -6,16 +6,11 @@ import 'package:cryptography/cryptography.dart';
 import 'package:uuid/uuid.dart';
 
 class PasswordHasher {
-  PasswordHasher({
-    Pbkdf2? algorithm,
-    Uuid? uuid,
-  })  : _algorithm = algorithm ??
-            Pbkdf2(
-              macAlgorithm: Hmac.sha256(),
-              iterations: 120000,
-              bits: 256,
-            ),
-        _uuid = uuid ?? const Uuid();
+  PasswordHasher({Pbkdf2? algorithm, Uuid? uuid})
+    : _algorithm =
+          algorithm ??
+          Pbkdf2(macAlgorithm: Hmac.sha256(), iterations: 120000, bits: 256),
+      _uuid = uuid ?? const Uuid();
 
   final Pbkdf2 _algorithm;
   final Uuid _uuid;
@@ -28,10 +23,7 @@ class PasswordHasher {
         '${raw.substring(8, 12)}-${raw.substring(12, 16)}';
   }
 
-  Future<String> hash({
-    required String value,
-    required String salt,
-  }) async {
+  Future<String> hash({required String value, required String salt}) async {
     final key = await _algorithm.deriveKey(
       secretKey: SecretKey(utf8.encode(value)),
       nonce: utf8.encode(salt),

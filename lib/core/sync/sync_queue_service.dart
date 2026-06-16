@@ -10,30 +10,18 @@ import '../database/app_database.dart';
 import '../database/database_providers.dart';
 import '../utils/id_generator.dart';
 
-enum SyncQueueOperation {
-  upsert,
-  delete,
-}
+enum SyncQueueOperation { upsert, delete }
 
-enum SyncQueueEntryStatus {
-  pending,
-  syncing,
-  failed,
-  synced,
-}
+enum SyncQueueEntryStatus { pending, syncing, failed, synced }
 
-enum SyncConflictPolicy {
-  clientWins,
-  serverWins,
-  manualReview,
-}
+enum SyncConflictPolicy { clientWins, serverWins, manualReview }
 
 extension on SyncConflictPolicy {
   String get dbValue => switch (this) {
-        SyncConflictPolicy.clientWins => 'client_wins',
-        SyncConflictPolicy.serverWins => 'server_wins',
-        SyncConflictPolicy.manualReview => 'manual_review',
-      };
+    SyncConflictPolicy.clientWins => 'client_wins',
+    SyncConflictPolicy.serverWins => 'server_wins',
+    SyncConflictPolicy.manualReview => 'manual_review',
+  };
 }
 
 class SyncQueueOverview {
@@ -54,18 +42,21 @@ class SyncQueueService {
   SyncQueueService({
     required AppDatabase database,
     required SharedPreferences sharedPreferences,
-  })  : _database = database,
-        _sharedPreferences = sharedPreferences;
+  }) : _database = database,
+       _sharedPreferences = sharedPreferences;
 
   static const _deviceIdKey = 'sync_device_id';
+  static const _pullCursorKey = 'remote_sync_pull_cursor';
 
   final AppDatabase _database;
   final SharedPreferences _sharedPreferences;
 
   String get description =>
-      'A aplicacao agora grava uma fila de sincronizacao local com operacao, payload, deviceId, entityVersion e politica de conflito, pronta para um backend futuro.';
+      'A aplicacao grava uma fila local com operacao, payload, deviceId, entityVersion e politica de conflito. Quando ha sessao no servidor, essa fila e enviada automaticamente e tambem pode ser reenviada manualmente.';
 
   Future<String> getOrCreateDeviceId() async {
+    // Cada instalacao recebe um deviceId local. No futuro isso ajuda o backend a
+    // diferenciar celular, notebook e navegador do mesmo aluno.
     final existing = _sharedPreferences.getString(_deviceIdKey);
     if (existing != null && existing.isNotEmpty) {
       return existing;
@@ -110,6 +101,12 @@ class SyncQueueService {
     );
   }
 
+  Future<int> discardLocalQueue() async {
+    final deleted = await _database.delete(_database.syncQueueEntries).go();
+    await _sharedPreferences.remove(_pullCursorKey);
+    return deleted;
+  }
+
   Stream<SyncQueueOverview> watchOverview() {
     return _database
         .customSelect(
@@ -123,12 +120,14 @@ class SyncQueueService {
           readsFrom: {_database.syncQueueEntries},
         )
         .watchSingle()
-        .map((row) => SyncQueueOverview(
-              deviceId: _sharedPreferences.getString(_deviceIdKey) ?? 'pendente',
-              pendingCount: row.read<int>('pending_count'),
-              failedCount: row.read<int>('failed_count'),
-              lastSyncedAt: row.readNullable<DateTime>('last_synced_at'),
-            ));
+        .map(
+          (row) => SyncQueueOverview(
+            deviceId: _sharedPreferences.getString(_deviceIdKey) ?? 'pendente',
+            pendingCount: row.read<int>('pending_count'),
+            failedCount: row.read<int>('failed_count'),
+            lastSyncedAt: row.readNullable<DateTime>('last_synced_at'),
+          ),
+        );
   }
 
   Future<void> _enqueue({
@@ -142,7 +141,12 @@ class SyncQueueService {
     final deviceId = await getOrCreateDeviceId();
     final now = DateTime.now();
 
-    await _database.into(_database.syncQueueEntries).insertOnConflictUpdate(
+    // A chave entityType::entityId faz a fila compactar alteracoes repetidas da
+    // mesma entidade. Se o aluno editar a disciplina varias vezes offline, so a
+    // versao mais recente precisa ser enviada.
+    await _database
+        .into(_database.syncQueueEntries)
+        .insertOnConflictUpdate(
           SyncQueueEntriesCompanion(
             id: Value('$entityType::$entityId'),
             entityType: Value(entityType),

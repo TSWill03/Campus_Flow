@@ -7,6 +7,7 @@ import '../../domain/entities/auth_account.dart';
 import '../../domain/entities/auth_action_result.dart';
 import '../../domain/entities/auth_session.dart';
 import '../../domain/entities/auth_snapshot.dart';
+import '../../domain/entities/google_auth_identity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../services/auth_secure_store.dart';
 import '../services/google_auth_service.dart';
@@ -19,11 +20,11 @@ class LocalAuthRepository implements AuthRepository {
     required GoogleAuthService googleAuthService,
     String accountStorageKey = 'campusflow.auth.account',
     String sessionStorageKey = 'campusflow.auth.session',
-  })  : _secureStore = secureStore,
-        _passwordHasher = passwordHasher,
-        _googleAuthService = googleAuthService,
-        _accountStorageKey = accountStorageKey,
-        _sessionStorageKey = sessionStorageKey;
+  }) : _secureStore = secureStore,
+       _passwordHasher = passwordHasher,
+       _googleAuthService = googleAuthService,
+       _accountStorageKey = accountStorageKey,
+       _sessionStorageKey = sessionStorageKey;
 
   final AuthSecureStore _secureStore;
   final PasswordHasher _passwordHasher;
@@ -161,14 +162,19 @@ class LocalAuthRepository implements AuthRepository {
       ),
     );
 
-    return const AuthActionResult(
-      message: 'Login realizado com sucesso.',
-    );
+    return const AuthActionResult(message: 'Login realizado com sucesso.');
   }
 
   @override
   Future<AuthActionResult> signInWithGoogle() async {
     final identity = await _googleAuthService.authenticate();
+    return signInWithGoogleIdentity(identity);
+  }
+
+  @override
+  Future<AuthActionResult> signInWithGoogleIdentity(
+    GoogleAuthIdentity identity,
+  ) async {
     final normalizedEmail = _passwordHasher.normalizeEmail(identity.email);
     final existing = await _readAccount();
     final now = DateTime.now();
@@ -254,8 +260,9 @@ class LocalAuthRepository implements AuthRepository {
     required String newPassword,
   }) async {
     final account = await _requireMatchingAccount(email);
-    final normalizedRecoveryCode =
-        _passwordHasher.normalizeRecoveryCode(recoveryCode);
+    final normalizedRecoveryCode = _passwordHasher.normalizeRecoveryCode(
+      recoveryCode,
+    );
     final providedHash = await _passwordHasher.hash(
       value: normalizedRecoveryCode,
       salt: account.recoveryCodeSalt,
@@ -273,13 +280,24 @@ class LocalAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AuthActionResult> requestPasswordReset({required String email}) async {
+    await _requireMatchingAccount(email);
+    return const AuthActionResult(
+      message:
+          'Use o codigo local gerado na criacao da conta para redefinir a senha.',
+    );
+  }
+
+  @override
   Future<AuthActionResult> resetPasswordWithGoogle({
     required String email,
     required String newPassword,
   }) async {
     final account = await _requireMatchingAccount(email);
     final identity = await _googleAuthService.authenticate();
-    final normalizedGoogleEmail = _passwordHasher.normalizeEmail(identity.email);
+    final normalizedGoogleEmail = _passwordHasher.normalizeEmail(
+      identity.email,
+    );
     final allowedGoogleEmail = account.linkedGoogleEmail == null
         ? account.email
         : account.linkedGoogleEmail!;

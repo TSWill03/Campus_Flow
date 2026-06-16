@@ -30,7 +30,8 @@ class AuthAccount {
   final DateTime updatedAt;
 
   bool get hasPassword =>
-      (passwordHash?.isNotEmpty ?? false) && (passwordSalt?.isNotEmpty ?? false);
+      (passwordHash?.isNotEmpty ?? false) &&
+      (passwordSalt?.isNotEmpty ?? false);
 
   bool get isGoogleLinked => linkedGoogleEmail?.trim().isNotEmpty ?? false;
 

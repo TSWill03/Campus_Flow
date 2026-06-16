@@ -1,9 +1,6 @@
 // Signature: dev.tswicolly03
 
-enum AuthSignInMethod {
-  password,
-  google,
-}
+enum AuthSignInMethod { password, google }
 
 class AuthSession {
   const AuthSession({

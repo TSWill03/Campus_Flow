@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
+import '../../../../core/attachments/attachment_owner_type.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/sync/sync_queue_service.dart';
 import '../../../../core/sync/sync_status.dart';
@@ -21,6 +22,29 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
   @override
   Future<void> deleteSubject(String id) async {
     final now = DateTime.now();
+    final lessonRows =
+        await (_database.select(_database.courseSubjectLessons)..where(
+              (table) =>
+                  table.courseSubjectId.equals(id) &
+                  table.isDeleted.equals(false),
+            ))
+            .get();
+    final lessonIds = lessonRows.map((row) => row.id).toList(growable: false);
+    final attachmentRows = lessonIds.isEmpty
+        ? const <AttachmentRow>[]
+        : await (_database.select(_database.attachments)..where(
+                (table) =>
+                    table.ownerType.equals(
+                      AttachmentOwnerType.courseSubjectLesson.dbValue,
+                    ) &
+                    table.ownerId.isIn(lessonIds) &
+                    table.isDeleted.equals(false),
+              ))
+              .get();
+    final attachmentIds = attachmentRows
+        .map((row) => row.id)
+        .toList(growable: false);
+
     await _database.transaction(() async {
       await (_database.update(
         _database.courseSubjects,
@@ -40,18 +64,23 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
           syncStatus: Value(SyncStatus.pendingDelete.name),
         ),
       );
-      await _syncQueueService.enqueueDelete(
-        entityType: 'course_subject',
-        entityId: id,
-        entityVersion: now.millisecondsSinceEpoch,
-        payload: {
-          'id': id,
-          'isDeleted': true,
-          'updatedAt': now.toIso8601String(),
-          'syncStatus': SyncStatus.pendingDelete.name,
-        },
-      );
+
+      if (attachmentIds.isNotEmpty) {
+        await (_database.update(
+          _database.attachments,
+        )..where((table) => table.id.isIn(attachmentIds))).write(
+          AttachmentsCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingDelete.name),
+          ),
+        );
+      }
     });
+
+    await _enqueueDelete('course_subject', id, now);
+    await _enqueueDeleteForIds('course_subject_lesson', lessonIds, now);
+    await _enqueueDeleteForIds('attachment', attachmentIds, now);
   }
 
   @override
@@ -210,17 +239,55 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
   @override
   Future<void> deleteLesson(String id) async {
     final now = DateTime.now();
-    await (_database.update(
-      _database.courseSubjectLessons,
-    )..where((table) => table.id.equals(id))).write(
-      CourseSubjectLessonsCompanion(
-        isDeleted: const Value(true),
-        updatedAt: Value(now),
-        syncStatus: Value(SyncStatus.pendingDelete.name),
-      ),
-    );
+    final attachmentRows =
+        await (_database.select(_database.attachments)..where(
+              (table) =>
+                  table.ownerType.equals(
+                    AttachmentOwnerType.courseSubjectLesson.dbValue,
+                  ) &
+                  table.ownerId.equals(id) &
+                  table.isDeleted.equals(false),
+            ))
+            .get();
+    final attachmentIds = attachmentRows
+        .map((row) => row.id)
+        .toList(growable: false);
+
+    await _database.transaction(() async {
+      await (_database.update(
+        _database.courseSubjectLessons,
+      )..where((table) => table.id.equals(id))).write(
+        CourseSubjectLessonsCompanion(
+          isDeleted: const Value(true),
+          updatedAt: Value(now),
+          syncStatus: Value(SyncStatus.pendingDelete.name),
+        ),
+      );
+
+      if (attachmentIds.isNotEmpty) {
+        await (_database.update(
+          _database.attachments,
+        )..where((table) => table.id.isIn(attachmentIds))).write(
+          AttachmentsCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingDelete.name),
+          ),
+        );
+      }
+    });
+
+    await _enqueueDelete('course_subject_lesson', id, now);
+    await _enqueueDeleteForIds('attachment', attachmentIds, now);
+  }
+
+  Future<void> _enqueueDelete(
+    String entityType,
+    String id,
+    DateTime now,
+  ) async {
     await _syncQueueService.enqueueDelete(
-      entityType: 'course_subject_lesson',
+      entityType: entityType,
       entityId: id,
       entityVersion: now.millisecondsSinceEpoch,
       payload: {
@@ -230,6 +297,16 @@ class DriftCourseSubjectRepository implements CourseSubjectRepository {
         'syncStatus': SyncStatus.pendingDelete.name,
       },
     );
+  }
+
+  Future<void> _enqueueDeleteForIds(
+    String entityType,
+    List<String> ids,
+    DateTime now,
+  ) async {
+    for (final id in ids) {
+      await _enqueueDelete(entityType, id, now);
+    }
   }
 
   @override

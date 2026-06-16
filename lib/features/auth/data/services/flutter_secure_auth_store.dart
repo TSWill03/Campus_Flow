@@ -5,12 +5,12 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'auth_secure_store.dart';
 
 class FlutterSecureAuthStore implements AuthSecureStore {
-  FlutterSecureAuthStore({
-    FlutterSecureStorage? storage,
-  }) : _storage = storage ??
-            const FlutterSecureStorage(
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
-            );
+  FlutterSecureAuthStore({FlutterSecureStorage? storage})
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            aOptions: AndroidOptions(encryptedSharedPreferences: true),
+          );
 
   final FlutterSecureStorage _storage;
 

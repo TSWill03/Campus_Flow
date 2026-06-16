@@ -9,6 +9,10 @@ import '../../../../shared/widgets/form_submission_state.dart';
 import '../../domain/entities/course_subject.dart';
 import 'course_subjects_provider.dart';
 
+/// Controller responsavel por montar e salvar uma disciplina.
+///
+/// A tela envia campos ja validados; aqui a entidade recebe id, timestamps e
+/// metadados de sincronizacao antes de ir para o repositorio.
 class CourseSubjectFormController
     extends AutoDisposeNotifier<FormSubmissionState> {
   @override

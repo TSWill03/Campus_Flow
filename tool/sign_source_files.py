@@ -38,6 +38,9 @@ SUFFIX_END = {
 ROOTS = [
     ROOT / "lib",
     ROOT / "test",
+    ROOT / "docs",
+    ROOT / "backend" / "src",
+    ROOT / "backend" / "test",
     ROOT / "android" / "app" / "src" / "main",
     ROOT / "ios" / "Runner",
     ROOT / "web",

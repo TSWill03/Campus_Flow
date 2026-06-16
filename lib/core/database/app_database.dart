@@ -8,6 +8,10 @@ import '../../shared/enums/app_enums.dart';
 
 part 'app_database.g.dart';
 
+// Todas as tabelas de dominio seguem a mesma ideia offline-first:
+// id local para funcionar sem internet, remoteId para o servidor futuro,
+// timestamps para auditoria/sync, syncStatus para fila de envio e isDeleted
+// para exclusao logica sem perder historico antes de sincronizar.
 @DataClassName('AcademicProfileRow')
 class AcademicProfiles extends Table {
   TextColumn get id => text()();
@@ -306,6 +310,10 @@ class SyncQueueEntries extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Banco local principal do CampusFlow.
+///
+/// Drift gera o codigo de acesso ao SQLite a partir destas tabelas. A mesma
+/// classe funciona em desktop/mobile e tambem na web via SQLite WASM.
 @DriftDatabase(
   tables: [
     AcademicProfiles,
@@ -345,6 +353,8 @@ class AppDatabase extends _$AppDatabase {
       await _createIndexes();
     },
     onUpgrade: (m, from, to) async {
+      // As migracoes sao incrementais: quem instalou uma versao antiga passa por
+      // cada etapa necessaria ate chegar ao schema atual, sem apagar os dados.
       if (from < 2) {
         await _migrateFrom1To2(m);
       }
@@ -372,6 +382,8 @@ class AppDatabase extends _$AppDatabase {
       await _createIndexes();
     },
     beforeOpen: (details) async {
+      // Foreign keys e indices sao reativados sempre que o banco abre porque
+      // SQLite trata algumas configuracoes por conexao.
       await customStatement('PRAGMA foreign_keys = ON');
       await _createIndexes();
       await _cleanupOrphanedAcademicData();

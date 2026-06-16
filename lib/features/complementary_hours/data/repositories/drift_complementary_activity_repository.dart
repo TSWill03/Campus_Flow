@@ -19,9 +19,9 @@ class DriftComplementaryActivityRepository
   @override
   Future<void> deleteActivity(String id) async {
     final now = DateTime.now();
-    await (_database.update(_database.complementaryActivities)
-          ..where((table) => table.id.equals(id)))
-        .write(
+    await (_database.update(
+      _database.complementaryActivities,
+    )..where((table) => table.id.equals(id))).write(
       ComplementaryActivitiesCompanion(
         isDeleted: const Value(true),
         updatedAt: Value(now),
@@ -71,23 +71,23 @@ class DriftComplementaryActivityRepository
       await _database
           .into(_database.complementaryActivities)
           .insertOnConflictUpdate(
-        ComplementaryActivitiesCompanion(
-          id: Value(activity.id),
-          remoteId: Value(activity.remoteId),
-          createdAt: Value(activity.createdAt),
-          updatedAt: Value(activity.updatedAt),
-          syncStatus: Value(activity.syncStatus.name),
-          isDeleted: Value(activity.isDeleted),
-          academicProfileId: Value(activity.academicProfileId),
-        title: Value(activity.title),
-        category: Value(activity.category),
-        date: Value(activity.date),
-        endDate: Value(activity.endDate),
-        workloadHours: Value(activity.workloadHours),
-        notes: Value(activity.notes),
-        status: Value(activity.status.name),
-        ),
-      );
+            ComplementaryActivitiesCompanion(
+              id: Value(activity.id),
+              remoteId: Value(activity.remoteId),
+              createdAt: Value(activity.createdAt),
+              updatedAt: Value(activity.updatedAt),
+              syncStatus: Value(activity.syncStatus.name),
+              isDeleted: Value(activity.isDeleted),
+              academicProfileId: Value(activity.academicProfileId),
+              title: Value(activity.title),
+              category: Value(activity.category),
+              date: Value(activity.date),
+              endDate: Value(activity.endDate),
+              workloadHours: Value(activity.workloadHours),
+              notes: Value(activity.notes),
+              status: Value(activity.status.name),
+            ),
+          );
       await _syncQueueService.enqueueUpsert(
         entityType: 'complementary_activity',
         entityId: activity.id,

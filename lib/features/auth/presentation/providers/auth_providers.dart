@@ -3,8 +3,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_client.dart';
+import '../../../../core/network/api_session_store.dart';
+import '../../../../core/network/api_settings.dart';
 import '../../../../core/error/app_exception.dart';
+import '../../data/repositories/hybrid_auth_repository.dart';
 import '../../data/repositories/local_auth_repository.dart';
+import '../../data/repositories/remote_auth_repository.dart';
 import '../../data/services/flutter_secure_auth_store.dart';
 import '../../data/services/google_auth_service.dart';
 import '../../data/services/password_hasher.dart';
@@ -23,13 +28,36 @@ final googleAuthServiceProvider = Provider<GoogleAuthService>(
   (ref) => PlatformGoogleAuthService(),
 );
 
-final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => LocalAuthRepository(
+final apiSessionStoreProvider = Provider<ApiSessionStore>((ref) {
+  return ApiSessionStore(secureStore: ref.watch(authSecureStoreProvider));
+});
+
+final apiClientProvider = Provider<ApiClient>((ref) {
+  return ApiClient(
+    settings: ref.watch(apiSettingsControllerProvider),
+    sessionStore: ref.watch(apiSessionStoreProvider),
+  );
+});
+
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  final localRepository = LocalAuthRepository(
     secureStore: ref.watch(authSecureStoreProvider),
     passwordHasher: ref.watch(passwordHasherProvider),
     googleAuthService: ref.watch(googleAuthServiceProvider),
-  ),
-);
+  );
+  final remoteRepository = RemoteAuthRepository(
+    apiClient: ref.watch(apiClientProvider),
+    sessionStore: ref.watch(apiSessionStoreProvider),
+    settings: ref.watch(apiSettingsControllerProvider),
+    googleAuthService: ref.watch(googleAuthServiceProvider),
+  );
+  final settings = ref.watch(apiSettingsControllerProvider);
+  return HybridAuthRepository(
+    localRepository: localRepository,
+    remoteRepository: remoteRepository,
+    useRemote: settings.hasServer,
+  );
+});
 
 class AuthController extends Notifier<AuthViewState> {
   bool _didBootstrap = false;
@@ -45,10 +73,7 @@ class AuthController extends Notifier<AuthViewState> {
 
   Future<void> refresh() async {
     final current = state;
-    state = current.copyWith(
-      isLoading: true,
-      clearError: true,
-    );
+    state = current.copyWith(isLoading: true, clearError: true);
 
     try {
       final snapshot = await ref.read(authRepositoryProvider).loadSnapshot();
@@ -81,8 +106,9 @@ class AuthController extends Notifier<AuthViewState> {
   }
 }
 
-final authControllerProvider =
-    NotifierProvider<AuthController, AuthViewState>(AuthController.new);
+final authControllerProvider = NotifierProvider<AuthController, AuthViewState>(
+  AuthController.new,
+);
 
 final authRouterRefreshProvider = Provider<ValueNotifier<int>>((ref) {
   final notifier = ValueNotifier<int>(0);

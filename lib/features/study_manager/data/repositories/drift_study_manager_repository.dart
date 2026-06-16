@@ -21,9 +21,9 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
   @override
   Future<void> deleteSession(String id) async {
     final now = DateTime.now();
-    await (_database.update(_database.studySessions)
-          ..where((table) => table.id.equals(id)))
-        .write(
+    await (_database.update(
+      _database.studySessions,
+    )..where((table) => table.id.equals(id))).write(
       StudySessionsCompanion(
         isDeleted: const Value(true),
         updatedAt: Value(now),
@@ -36,24 +36,91 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
   @override
   Future<void> deleteSubject(String id) async {
     final now = DateTime.now();
-    await (_database.update(_database.studySubjects)
-          ..where((table) => table.id.equals(id)))
-        .write(
-      StudySubjectsCompanion(
-        isDeleted: const Value(true),
-        updatedAt: Value(now),
-        syncStatus: Value(SyncStatus.pendingDelete.name),
-      ),
-    );
+    final topicRows =
+        await (_database.select(_database.studyTopics)..where(
+              (table) =>
+                  table.studySubjectId.equals(id) &
+                  table.isDeleted.equals(false),
+            ))
+            .get();
+    final topicIds = topicRows.map((row) => row.id).toList(growable: false);
+    final taskRows =
+        await (_database.select(_database.studyTasks)..where(
+              (table) =>
+                  table.studySubjectId.equals(id) &
+                  table.isDeleted.equals(false),
+            ))
+            .get();
+    final taskIds = taskRows.map((row) => row.id).toList(growable: false);
+    final sessionRows =
+        await (_database.select(_database.studySessions)..where(
+              (table) =>
+                  table.studySubjectId.equals(id) &
+                  table.isDeleted.equals(false),
+            ))
+            .get();
+    final sessionIds = sessionRows.map((row) => row.id).toList(growable: false);
+
+    await _database.transaction(() async {
+      await (_database.update(
+        _database.studySubjects,
+      )..where((table) => table.id.equals(id))).write(
+        StudySubjectsCompanion(
+          isDeleted: const Value(true),
+          updatedAt: Value(now),
+          syncStatus: Value(SyncStatus.pendingDelete.name),
+        ),
+      );
+
+      if (topicIds.isNotEmpty) {
+        await (_database.update(
+          _database.studyTopics,
+        )..where((table) => table.id.isIn(topicIds))).write(
+          StudyTopicsCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingDelete.name),
+          ),
+        );
+      }
+
+      if (taskIds.isNotEmpty) {
+        await (_database.update(
+          _database.studyTasks,
+        )..where((table) => table.id.isIn(taskIds))).write(
+          StudyTasksCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingDelete.name),
+          ),
+        );
+      }
+
+      if (sessionIds.isNotEmpty) {
+        await (_database.update(
+          _database.studySessions,
+        )..where((table) => table.id.isIn(sessionIds))).write(
+          StudySessionsCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingDelete.name),
+          ),
+        );
+      }
+    });
+
     await _enqueueDelete('study_subject', id, now);
+    await _enqueueDeleteForIds('study_topic', topicIds, now);
+    await _enqueueDeleteForIds('study_task', taskIds, now);
+    await _enqueueDeleteForIds('study_session', sessionIds, now);
   }
 
   @override
   Future<void> deleteTask(String id) async {
     final now = DateTime.now();
-    await (_database.update(_database.studyTasks)
-          ..where((table) => table.id.equals(id)))
-        .write(
+    await (_database.update(
+      _database.studyTasks,
+    )..where((table) => table.id.equals(id))).write(
       StudyTasksCompanion(
         isDeleted: const Value(true),
         updatedAt: Value(now),
@@ -66,9 +133,9 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
   @override
   Future<void> deleteTopic(String id) async {
     final now = DateTime.now();
-    await (_database.update(_database.studyTopics)
-          ..where((table) => table.id.equals(id)))
-        .write(
+    await (_database.update(
+      _database.studyTopics,
+    )..where((table) => table.id.equals(id))).write(
       StudyTopicsCompanion(
         isDeleted: const Value(true),
         updatedAt: Value(now),
@@ -116,32 +183,42 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
 
   @override
   Future<List<StudySession>> getAllSessions() async {
-    final rows = await _database.select(_database.studySessions).get();
+    final rows = await (_database.select(
+      _database.studySessions,
+    )..where((table) => table.isDeleted.equals(false))).get();
     return rows.map(_mapSession).toList();
   }
 
   @override
   Future<List<StudySubject>> getAllSubjects() async {
-    final rows = await _database.select(_database.studySubjects).get();
+    final rows = await (_database.select(
+      _database.studySubjects,
+    )..where((table) => table.isDeleted.equals(false))).get();
     return rows.map(_mapSubject).toList();
   }
 
   @override
   Future<List<StudyTask>> getAllTasks() async {
-    final rows = await _database.select(_database.studyTasks).get();
+    final rows = await (_database.select(
+      _database.studyTasks,
+    )..where((table) => table.isDeleted.equals(false))).get();
     return rows.map(_mapTask).toList();
   }
 
   @override
   Future<List<StudyTopic>> getAllTopics() async {
-    final rows = await _database.select(_database.studyTopics).get();
+    final rows = await (_database.select(
+      _database.studyTopics,
+    )..where((table) => table.isDeleted.equals(false))).get();
     return rows.map(_mapTopic).toList();
   }
 
   @override
   Future<void> saveSession(StudySession session) async {
     await _database.transaction(() async {
-      await _database.into(_database.studySessions).insertOnConflictUpdate(
+      await _database
+          .into(_database.studySessions)
+          .insertOnConflictUpdate(
             StudySessionsCompanion(
               id: Value(session.id),
               remoteId: Value(session.remoteId),
@@ -169,7 +246,9 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
   @override
   Future<void> saveSubject(StudySubject subject) async {
     await _database.transaction(() async {
-      await _database.into(_database.studySubjects).insertOnConflictUpdate(
+      await _database
+          .into(_database.studySubjects)
+          .insertOnConflictUpdate(
             StudySubjectsCompanion(
               id: Value(subject.id),
               remoteId: Value(subject.remoteId),
@@ -194,7 +273,9 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
   @override
   Future<void> saveTask(StudyTask task) async {
     await _database.transaction(() async {
-      await _database.into(_database.studyTasks).insertOnConflictUpdate(
+      await _database
+          .into(_database.studyTasks)
+          .insertOnConflictUpdate(
             StudyTasksCompanion(
               id: Value(task.id),
               remoteId: Value(task.remoteId),
@@ -222,7 +303,9 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
   @override
   Future<void> saveTopic(StudyTopic topic) async {
     await _database.transaction(() async {
-      await _database.into(_database.studyTopics).insertOnConflictUpdate(
+      await _database
+          .into(_database.studyTopics)
+          .insertOnConflictUpdate(
             StudyTopicsCompanion(
               id: Value(topic.id),
               remoteId: Value(topic.remoteId),
@@ -277,7 +360,8 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
     final query = _database.select(_database.studyTopics)
       ..where(
         (table) =>
-            table.isDeleted.equals(false) & table.studySubjectId.equals(subjectId),
+            table.isDeleted.equals(false) &
+            table.studySubjectId.equals(subjectId),
       )
       ..orderBy([(table) => OrderingTerm.asc(table.name)]);
     return query.watch().map((rows) => rows.map(_mapTopic).toList());
@@ -360,7 +444,11 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
     );
   }
 
-  Future<void> _enqueueDelete(String entityType, String entityId, DateTime now) {
+  Future<void> _enqueueDelete(
+    String entityType,
+    String entityId,
+    DateTime now,
+  ) {
     return _syncQueueService.enqueueDelete(
       entityType: entityType,
       entityId: entityId,
@@ -372,5 +460,15 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
         'syncStatus': SyncStatus.pendingDelete.name,
       },
     );
+  }
+
+  Future<void> _enqueueDeleteForIds(
+    String entityType,
+    List<String> ids,
+    DateTime now,
+  ) async {
+    for (final id in ids) {
+      await _enqueueDelete(entityType, id, now);
+    }
   }
 }

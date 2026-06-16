@@ -1,0 +1,11 @@
+# Signature: dev.tswicolly03
+
+tswicolly03.duckdns.org {
+    handle_path /api/* {
+        reverse_proxy 127.0.0.1:3333
+    }
+
+    handle {
+        reverse_proxy localhost:5006
+    }
+}

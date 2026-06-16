@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/backup/backup_service.dart';
+import '../../../../core/network/api_settings.dart';
+import '../../../../core/sync/remote_sync_service.dart';
 import '../../../../core/sync/sync_queue_service.dart';
 import '../../../../core/theme/app_color_profile.dart';
 import '../../../../core/theme/color_profile_controller.dart';
@@ -31,6 +33,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   ];
 
   bool _processingBackup = false;
+  bool _syncingNow = false;
+  bool _discardingSyncQueue = false;
   late final TextEditingController _colorProfileNameController;
   bool _colorProfileDirty = false;
 
@@ -38,8 +42,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   void initState() {
     super.initState();
     final initialProfile = ref.read(colorProfileControllerProvider);
-    _colorProfileNameController =
-        TextEditingController(text: initialProfile.name);
+    _colorProfileNameController = TextEditingController(
+      text: initialProfile.name,
+    );
   }
 
   @override
@@ -52,18 +57,22 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget build(BuildContext context) {
     final themePreference = ref.watch(themeModeControllerProvider);
     final colorProfile = ref.watch(colorProfileControllerProvider);
-    final restorePointAvailable = ref.watch(backupRestorePointAvailableProvider);
-    final restorePointCreatedAt = ref.watch(backupRestorePointCreatedAtProvider);
+    final restorePointAvailable = ref.watch(
+      backupRestorePointAvailableProvider,
+    );
+    final restorePointCreatedAt = ref.watch(
+      backupRestorePointCreatedAtProvider,
+    );
     final syncOverview = ref.watch(syncQueueOverviewProvider);
     final syncDeviceId = ref.watch(syncDeviceIdProvider);
     final syncInfo = ref.watch(syncQueueServiceProvider);
     final authState = ref.watch(authControllerProvider);
+    final apiSettings = ref.watch(apiSettingsControllerProvider);
 
     if (!_colorProfileDirty &&
         _colorProfileNameController.text != colorProfile.name) {
       _colorProfileNameController.text = colorProfile.name;
     }
-
     return ListView(
       children: [
         const SectionHeader(
@@ -99,6 +108,93 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   onPressed: _signOut,
                   icon: const Icon(Icons.logout_rounded),
                   label: const Text('Sair e bloquear app'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Servidor e sincronizacao',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'O CampusFlow se conecta automaticamente ao backend configurado no codigo. Nao e necessario ativar login remoto manualmente.',
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          apiSettings.hasServer
+                              ? Icons.cloud_done_rounded
+                              : Icons.cloud_off_rounded,
+                          color: apiSettings.hasServer
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.error,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                apiSettings.hasServer
+                                    ? 'Servidor ativo'
+                                    : 'Servidor nao configurado',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(apiSettings.normalizedBaseUrl),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _syncingNow || !apiSettings.hasServer
+                          ? null
+                          : _syncNow,
+                      icon: _syncingNow
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.sync_rounded),
+                      label: const Text('Sincronizar agora'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _discardingSyncQueue
+                          ? null
+                          : _discardOldSyncQueue,
+                      icon: _discardingSyncQueue
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.cleaning_services_rounded),
+                      label: const Text('Descartar fila antiga'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -279,7 +375,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     ),
                     if (restorePointAvailable.valueOrNull ?? false)
                       OutlinedButton.icon(
-                        onPressed: _processingBackup ? null : _restorePreviousState,
+                        onPressed: _processingBackup
+                            ? null
+                            : _restorePreviousState,
                         icon: const Icon(Icons.history_rounded),
                         label: const Text('Restaurar estado anterior'),
                       ),
@@ -288,7 +386,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 if (restorePointAvailable.valueOrNull ?? false) ...[
                   const SizedBox(height: 16),
                   Card(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Text(
@@ -310,7 +410,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Preparacao para sincronizacao futura',
+                  'Sincronizacao com servidor',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
@@ -320,11 +420,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   data: (overview) => Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Device ID: ${syncDeviceId.valueOrNull ?? overview.deviceId}'),
+                      Text(
+                        'Device ID: ${syncDeviceId.valueOrNull ?? overview.deviceId}',
+                      ),
                       const SizedBox(height: 8),
                       Text('Pendencias na fila: ${overview.pendingCount}'),
                       const SizedBox(height: 4),
-                      Text('Falhas aguardando tratamento: ${overview.failedCount}'),
+                      Text(
+                        'Falhas aguardando tratamento: ${overview.failedCount}',
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         'Ultima sincronizacao registrada: '
@@ -332,12 +436,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                     ],
                   ),
-                  loading: () => const Text('Carregando status da fila local...'),
-                  error: (error, _) => Text('Nao foi possivel ler a fila local: $error'),
+                  loading: () =>
+                      const Text('Carregando status da fila local...'),
+                  error: (error, _) =>
+                      Text('Nao foi possivel ler a fila local: $error'),
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Todas as entidades carregam metadados de sincronizacao, incluindo id local, remoteId, createdAt, updatedAt, syncStatus e isDeleted. As alteracoes tambem entram em uma fila local com payload e entityVersion.',
+                  'Todas as entidades carregam metadados de sincronizacao, incluindo id local, remoteId, createdAt, updatedAt, syncStatus e isDeleted. As alteracoes entram em uma fila local e sao reenviadas se uma tentativa falhar. Se a fila vier de dados muito antigos, descarte a fila antiga para comecar a sincronizar apenas alteracoes novas.',
                 ),
               ],
             ),
@@ -380,7 +486,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _importBackup() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Importar backup?'),
@@ -431,9 +538,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          imported
-              ? 'Backup importado com sucesso.'
-              : 'Importacao cancelada.',
+          imported ? 'Backup importado com sucesso.' : 'Importacao cancelada.',
         ),
       ),
     );
@@ -444,11 +549,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     bool restored = false;
     try {
-      restored = await ref.read(backupServiceProvider).restoreTemporaryRestorePoint();
+      restored = await ref
+          .read(backupServiceProvider)
+          .restoreTemporaryRestorePoint();
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Falha ao restaurar o estado anterior: $error')),
+          SnackBar(
+            content: Text('Falha ao restaurar o estado anterior: $error'),
+          ),
         );
       }
     } finally {
@@ -481,9 +590,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           : _colorProfileNameController.text.trim(),
     );
 
-    await ref.read(colorProfileControllerProvider.notifier).updateProfile(
-          updatedProfile,
-        );
+    await ref
+        .read(colorProfileControllerProvider.notifier)
+        .updateProfile(updatedProfile);
     if (!mounted) {
       return;
     }
@@ -502,7 +611,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _updateColorProfile(AppColorProfile profile) {
-    return ref.read(colorProfileControllerProvider.notifier).updateProfile(
+    return ref
+        .read(colorProfileControllerProvider.notifier)
+        .updateProfile(
           profile.copyWith(
             name: _colorProfileNameController.text.trim().isEmpty
                 ? profile.name
@@ -513,6 +624,94 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   Future<void> _signOut() async {
     await ref.read(authControllerProvider.notifier).signOut();
+  }
+
+  Future<void> _syncNow() async {
+    setState(() => _syncingNow = true);
+    RemoteSyncRunResult? result;
+    Object? failure;
+    try {
+      result = await ref.read(remoteSyncServiceProvider).syncNow();
+      ref.invalidate(syncQueueOverviewProvider);
+    } catch (error) {
+      failure = error;
+    } finally {
+      if (mounted) {
+        setState(() => _syncingNow = false);
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          failure != null
+              ? 'Falha ao sincronizar: $failure'
+              : 'Sync concluida: ${result!.pushed} enviados, '
+                    '${result.failed} falhas, '
+                    '${result.conflicts} conflitos, ${result.pulled} lidos.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _discardOldSyncQueue() async {
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Descartar fila antiga?'),
+            content: const Text(
+              'Isso nao apaga seus perfis, disciplinas, aulas, horas ou anexos. Apenas remove tentativas antigas de sincronizacao local. Depois disso, somente novas alteracoes entrarao na fila para o servidor.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Descartar fila'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed) {
+      return;
+    }
+
+    setState(() => _discardingSyncQueue = true);
+    Object? failure;
+    var deleted = 0;
+    try {
+      deleted = await ref.read(syncQueueServiceProvider).discardLocalQueue();
+      ref.invalidate(syncQueueOverviewProvider);
+    } catch (error) {
+      failure = error;
+    } finally {
+      if (mounted) {
+        setState(() => _discardingSyncQueue = false);
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          failure != null
+              ? 'Falha ao descartar fila antiga: $failure'
+              : 'Fila antiga descartada: $deleted registros removidos.',
+        ),
+      ),
+    );
   }
 }
 

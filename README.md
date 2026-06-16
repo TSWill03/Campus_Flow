@@ -4,6 +4,23 @@
 
 CampusFlow e um gerenciador academico pessoal offline-first para estudantes universitarios. O app centraliza perfil academico, disciplinas, horas obrigatorias, organizacao de estudos e backup local em JSON, sem depender de backend no MVP.
 
+## Para apresentacao academica
+
+Este repositorio tambem esta preparado para ser apresentado como projeto final,
+TCC ou trabalho de disciplina. A documentacao de apoio fica em:
+
+- `docs/GUIA_DE_APRESENTACAO.md`: narrativa do projeto, problema, solucao,
+  decisoes tecnicas e perguntas provaveis da banca.
+- `docs/MAPA_DO_CODIGO.md`: caminho de leitura para explicar o codigo sem se
+  perder na estrutura.
+- `docs/ROTEIRO_DE_DEMO.md`: ordem sugerida para demonstrar o app funcionando.
+- `docs/AUDITORIA_RELEASE.md`: checklist tecnico, incongruencias corrigidas,
+  testes adicionados e validacao de build.
+
+Sugestao de apresentacao: primeiro mostre o problema do estudante, depois a demo
+do app e, por ultimo, abra o codigo para explicar arquitetura, banco local,
+sync, importacao de grade e backend.
+
 ## Stack
 
 - Flutter stable 3.38.x
@@ -47,6 +64,7 @@ CampusFlow e um gerenciador academico pessoal offline-first para estudantes univ
 - Login local seguro com email e senha
 - Codigo de recuperacao local para redefinir senha sem backend
 - Vinculo opcional com Google quando a plataforma e a configuracao OAuth permitirem
+- Login com Google conectado ao backend quando os Client IDs OAuth estao configurados
 
 ## Arquitetura
 
@@ -124,12 +142,47 @@ O app agora possui uma camada de autenticacao local desacoplada do banco academi
 
 ### Google
 
-O login com Google foi preparado como metodo complementar de acesso:
+O login com Google usa OAuth do Google no app e validacao de `idToken` no backend.
 
-- Android, iOS, macOS e Web: suportados pelo fluxo atual
-- Windows: o botao fica desabilitado nesta etapa e o login local continua sendo o caminho oficial
+- Web: usa o botao oficial do Google Identity Services.
+- Android: usa `GOOGLE_SERVER_CLIENT_ID` com o Client ID Web do Google.
+- iOS: usa `GOOGLE_IOS_CLIENT_ID`, `GOOGLE_SERVER_CLIENT_ID` e URL scheme no `Info.plist`.
+- Windows/Linux: o botao fica desabilitado nesta etapa; use email e senha.
 
-Na Web, e necessario fornecer `GOOGLE_WEB_CLIENT_ID` para ativar o fluxo. Em plataformas nativas suportadas, o projeto tambem precisa da configuracao OAuth correspondente do Google.
+Para ativar em desenvolvimento Web:
+
+```powershell
+flutter run -d chrome --web-hostname localhost --web-port 7357 `
+  --dart-define=GOOGLE_WEB_CLIENT_ID=SEU_WEB_CLIENT_ID.apps.googleusercontent.com
+```
+
+Para build Web:
+
+```powershell
+flutter build web --release `
+  --dart-define=GOOGLE_WEB_CLIENT_ID=SEU_WEB_CLIENT_ID.apps.googleusercontent.com
+```
+
+Para Android:
+
+```powershell
+flutter run -d android `
+  --dart-define=GOOGLE_SERVER_CLIENT_ID=SEU_WEB_CLIENT_ID.apps.googleusercontent.com
+```
+
+O backend tambem precisa aceitar esse Client ID. No servidor de Vinhedo:
+
+```powershell
+.\backend\deploy\vinhedo\set-google-oauth.ps1 `
+  -WebClientId "SEU_WEB_CLIENT_ID.apps.googleusercontent.com"
+```
+
+No Google Cloud Console, configure:
+
+- OAuth consent screen com nome `CampusFlow`.
+- OAuth Client `Web application` com JavaScript origins `http://localhost:7357` e `https://tswicolly03.duckdns.org`.
+- OAuth Client `Android` com package `com.campusflow.campus_flow` e SHA-1 do certificado usado no build.
+- OAuth Client `iOS` com o bundle id do Runner quando for publicar iOS.
 
 As tabelas foram desenhadas com metadados para sincronizacao futura:
 
@@ -187,6 +240,124 @@ O projeto foi preparado para web com Drift em WASM:
 - `web/drift_worker.js`
 
 Esses artefatos ja foram incluidos para a conexao web do Drift. O suporte web foi habilitado na toolchain e a arquitetura do banco ja usa `drift_flutter` com opcoes web configuradas.
+
+## Backend
+
+O repositorio agora inclui uma API inicial em `backend/` para a evolucao SaaS do CampusFlow.
+
+Essa API entrega:
+
+- autenticacao central com email/senha, refresh token e Google via `idToken`
+- recuperacao de senha por token
+- sincronizacao generica offline-first por entidade
+- upload, listagem, download e exclusao logica de anexos
+- PostgreSQL via Prisma
+- Docker Compose para banco local
+
+Para rodar:
+
+```powershell
+cd backend
+npm install
+Copy-Item .env.example .env
+docker compose up -d postgres
+npm run db:push
+npm run dev
+```
+
+Mais detalhes estao em `backend/README.md`.
+
+### Conectar o app ao servidor
+
+O app usa o backend automaticamente quando `CAMPUSFLOW_API_BASE_URL` esta definido no codigo/build.
+
+Para usar seu servidor de Vinhedo, a URL padrao configurada no codigo e:
+
+```text
+https://tswicolly03.duckdns.org/api
+```
+
+Em `Ajustes > Servidor e sincronizacao`, o app apenas mostra o endpoint ativo e permite acionar uma sincronizacao manual. Nao existe mais toggle para escolher login local ou remoto.
+
+Para outros servidores, publique a API com HTTPS e use algo como:
+
+```text
+https://api.seudominio.com
+```
+
+Tambem da para embutir uma URL padrao no build:
+
+```powershell
+flutter build web --release --dart-define=CAMPUSFLOW_API_BASE_URL=https://api.seudominio.com
+flutter build windows --release --dart-define=CAMPUSFLOW_API_BASE_URL=https://api.seudominio.com
+```
+
+Para o servidor de Vinhedo:
+
+```powershell
+flutter build web --release --dart-define=CAMPUSFLOW_API_BASE_URL=https://tswicolly03.duckdns.org/api
+flutter build windows --release --dart-define=CAMPUSFLOW_API_BASE_URL=https://tswicolly03.duckdns.org/api
+```
+
+Depois de abrir o app:
+
+- entre ou crie uma conta normalmente
+- o login usa o servidor automaticamente
+- a sincronizacao roda automaticamente apos carregar uma sessao autenticada
+- use `Sincronizar agora` para enviar a fila local para a API
+- use `Descartar fila antiga` se estiver migrando dados locais antigos e quiser que apenas novas alteracoes sejam enviadas ao servidor
+
+O modo local continua existindo no codigo como fallback arquitetural, mas nao e mais uma opcao exibida para o usuario.
+
+### Deploy no servidor de Vinhedo
+
+O deploy do backend fica documentado e automatizado em `backend/deploy/vinhedo/`.
+
+Para publicar ou atualizar a API:
+
+```powershell
+.\backend\deploy\vinhedo\deploy.ps1
+```
+
+O script usa SSH com a chave local informada para acessar `ubuntu@tswicolly03.duckdns.org`, envia o backend, cria o PostgreSQL via Docker, instala a API como servico `campusflow-api` e configura o Caddy para expor `/api`.
+
+Ele tambem cria o servico `campusflow-firewall`, que libera `80` e `443` no firewall local do Linux. Se o teste publico ainda nao abrir, falta liberar essas portas no firewall externo da infraestrutura, como Oracle Cloud Security List/NSG ou redirecionamento do roteador.
+
+No caso da Oracle Cloud, o caminho geral e:
+
+1. Acessar `Networking > Virtual Cloud Networks`.
+2. Abrir a VCN/subnet da VM.
+3. Entrar em `Security Lists` ou `Network Security Groups`.
+4. Criar uma regra TCP com `Source CIDR = 0.0.0.0/0` e porta `80`.
+5. Criar outra regra TCP com `Source CIDR = 0.0.0.0/0` e porta `443`.
+6. Testar `https://tswicolly03.duckdns.org/api/health`.
+
+Comandos simples para manutencao no servidor:
+
+```powershell
+ssh -i "C:\Users\Usuario\Desktop\BlackLight\LittleX\.openclaw\credentials\ssh\openclaw_key" ubuntu@tswicolly03.duckdns.org
+```
+
+```bash
+sudo systemctl status campusflow-api
+sudo journalctl -u campusflow-api -f
+sudo systemctl restart campusflow-api
+```
+
+Teste publico:
+
+```text
+https://tswicolly03.duckdns.org/api/health
+```
+
+Arquivos importantes no servidor:
+
+- codigo atual: `/opt/campusflow/backend/current`
+- variaveis secretas: `/opt/campusflow/backend/.env`
+- uploads/anexos: `/opt/campusflow/backend/storage/uploads`
+- banco PostgreSQL: volume Docker `campusflow_postgres`
+
+Nunca envie a chave SSH nem o arquivo `.env` para o GitHub ou para terceiros.
 
 ## Rotas principais
 
