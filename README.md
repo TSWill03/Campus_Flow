@@ -335,7 +335,8 @@ No caso da Oracle Cloud, o caminho geral e:
 Comandos simples para manutencao no servidor:
 
 ```powershell
-ssh -i "C:\Users\Usuario\Desktop\BlackLight\LittleX\.openclaw\credentials\ssh\openclaw_key" ubuntu@tswicolly03.duckdns.org
+$env:CAMPUSFLOW_SSH_KEY = "<caminho-da-sua-chave-ssh>"
+ssh -i "$env:CAMPUSFLOW_SSH_KEY" ubuntu@tswicolly03.duckdns.org
 ```
 
 ```bash

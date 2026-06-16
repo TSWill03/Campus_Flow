@@ -3,7 +3,7 @@
 param(
   [string]$HostName = "tswicolly03.duckdns.org",
   [string]$User = "ubuntu",
-  [string]$SshKey = "C:\Users\Usuario\Desktop\BlackLight\LittleX\.openclaw\credentials\ssh\openclaw_key"
+  [string]$SshKey = $env:CAMPUSFLOW_SSH_KEY
 )
 
 $ErrorActionPreference = "Stop"
@@ -16,8 +16,12 @@ function Assert-LastCommand {
   }
 }
 
+if ([string]::IsNullOrWhiteSpace($SshKey)) {
+  throw "Informe a chave SSH com -SshKey ou defina a variavel CAMPUSFLOW_SSH_KEY."
+}
+
 if (-not (Test-Path -LiteralPath $SshKey)) {
-  throw "Chave SSH nao encontrada em: $SshKey"
+  throw "Chave SSH nao encontrada no caminho informado."
 }
 
 $deployDir = Split-Path -Parent $MyInvocation.MyCommand.Path

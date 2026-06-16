@@ -186,13 +186,14 @@ https://tswicolly03.duckdns.org/api
 Pelo Windows, rode na raiz do projeto:
 
 ```powershell
+$env:CAMPUSFLOW_SSH_KEY = "<caminho-da-sua-chave-ssh>"
 .\backend\deploy\vinhedo\deploy.ps1
 ```
 
 O script usa:
 
 - SSH: `ubuntu@tswicolly03.duckdns.org`
-- chave: `C:\Users\Usuario\Desktop\BlackLight\LittleX\.openclaw\credentials\ssh\openclaw_key`
+- chave: valor local de `CAMPUSFLOW_SSH_KEY` ou parametro `-SshKey`
 - API Node em `127.0.0.1:3333`
 - PostgreSQL Docker em `127.0.0.1:5433`
 - firewall local liberando `80` e `443` via `campusflow-firewall`

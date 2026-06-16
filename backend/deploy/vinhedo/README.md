@@ -13,6 +13,7 @@ https://tswicolly03.duckdns.org/api
 Abra o PowerShell na raiz do projeto e execute:
 
 ```powershell
+$env:CAMPUSFLOW_SSH_KEY = "<caminho-da-sua-chave-ssh>"
 .\backend\deploy\vinhedo\deploy.ps1
 ```
 
@@ -30,7 +31,7 @@ O script:
 ## Acessar o servidor
 
 ```powershell
-ssh -i "C:\Users\Usuario\Desktop\BlackLight\LittleX\.openclaw\credentials\ssh\openclaw_key" ubuntu@tswicolly03.duckdns.org
+ssh -i "$env:CAMPUSFLOW_SSH_KEY" ubuntu@tswicolly03.duckdns.org
 ```
 
 ## Comandos uteis no servidor
