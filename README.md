@@ -16,6 +16,8 @@ TCC ou trabalho de disciplina. A documentacao de apoio fica em:
 - `docs/ROTEIRO_DE_DEMO.md`: ordem sugerida para demonstrar o app funcionando.
 - `docs/AUDITORIA_RELEASE.md`: checklist tecnico, incongruencias corrigidas,
   testes adicionados e validacao de build.
+- `docs/GUIA_TECNICO_ARQUITETURA_E_PERGUNTAS.md`: explicacao tecnica para
+  responder perguntas sobre arquitetura, banco, API, requisicoes, sync e deploy.
 
 Sugestao de apresentacao: primeiro mostre o problema do estudante, depois a demo
 do app e, por ultimo, abra o codigo para explicar arquitetura, banco local,
