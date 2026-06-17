@@ -58,12 +58,14 @@ Testar localmente no servidor:
 
 ```bash
 curl http://127.0.0.1:3333/health
+curl http://127.0.0.1:3333/ready
 ```
 
 Testar pela internet:
 
 ```text
 https://tswicolly03.duckdns.org/api/health
+https://tswicolly03.duckdns.org/api/ready
 ```
 
 Se esse teste nao abrir, mas `curl http://127.0.0.1:3333/health` funcionar dentro do servidor, falta liberar as portas `80` e `443` tambem no firewall externo da infraestrutura, por exemplo Oracle Cloud Security List/NSG ou redirecionamento de porta do roteador.
@@ -100,6 +102,7 @@ Description: CampusFlow HTTPS
 
 ```text
 https://tswicolly03.duckdns.org/api/health
+https://tswicolly03.duckdns.org/api/ready
 ```
 
 Se for um servidor fisico em casa, o equivalente e abrir/redirecionar as portas TCP `80` e `443` no roteador para o IP interno desse servidor.

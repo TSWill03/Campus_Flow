@@ -16,6 +16,10 @@ TCC ou trabalho de disciplina. A documentacao de apoio fica em:
 - `docs/ROTEIRO_DE_DEMO.md`: ordem sugerida para demonstrar o app funcionando.
 - `docs/AUDITORIA_RELEASE.md`: checklist tecnico, incongruencias corrigidas,
   testes adicionados e validacao de build.
+- `docs/AUDITORIA_PRE_APRESENTACAO.md`: auditoria conservadora para demo,
+  com achados, correcoes, riscos restantes e checklists.
+- `docs/PLANO_B_DEMO.md`: plano B se backend, banco, internet, Google ou Web
+  falharem durante a apresentacao.
 - `docs/GUIA_TECNICO_ARQUITETURA_E_PERGUNTAS.md`: explicacao tecnica para
   responder perguntas sobre arquitetura, banco, API, requisicoes, sync e deploy.
 
@@ -255,6 +259,7 @@ Essa API entrega:
 - upload, listagem, download e exclusao logica de anexos
 - PostgreSQL via Prisma
 - Docker Compose para banco local
+- `/health` para processo vivo e `/ready` para banco + storage
 
 Para rodar:
 
@@ -279,7 +284,7 @@ Para usar seu servidor de Vinhedo, a URL padrao configurada no codigo e:
 https://tswicolly03.duckdns.org/api
 ```
 
-Em `Ajustes > Servidor e sincronizacao`, o app apenas mostra o endpoint ativo e permite acionar uma sincronizacao manual. Nao existe mais toggle para escolher login local ou remoto.
+Na tela de login, o app mostra o endpoint ativo e permite cair para modo local/offline se o servidor estiver indisponivel. Em `Ajustes > Servidor e sincronizacao`, tambem da para testar `/health`, salvar/restaurar endpoint e limpar o endpoint como plano B.
 
 Para outros servidores, publique a API com HTTPS e use algo como:
 
@@ -309,7 +314,9 @@ Depois de abrir o app:
 - use `Sincronizar agora` para enviar a fila local para a API
 - use `Descartar fila antiga` se estiver migrando dados locais antigos e quiser que apenas novas alteracoes sejam enviadas ao servidor
 
-O modo local continua existindo no codigo como fallback arquitetural, mas nao e mais uma opcao exibida para o usuario.
+O modo local continua existindo como fallback arquitetural e pode ser ativado no login ou em Ajustes limpando o endpoint. Isso nao apaga dados locais.
+
+Importante: a sincronizacao remota ainda e parcial. O app envia a fila local para `/sync/push`, atualiza `remoteId`/`syncStatus` quando o backend aceita e consulta `/sync/pull`, mas a aplicacao automatica dos dados baixados no Drift local ainda e etapa futura.
 
 ### Deploy no servidor de Vinhedo
 
@@ -333,6 +340,7 @@ No caso da Oracle Cloud, o caminho geral e:
 4. Criar uma regra TCP com `Source CIDR = 0.0.0.0/0` e porta `80`.
 5. Criar outra regra TCP com `Source CIDR = 0.0.0.0/0` e porta `443`.
 6. Testar `https://tswicolly03.duckdns.org/api/health`.
+7. Testar `https://tswicolly03.duckdns.org/api/ready`.
 
 Comandos simples para manutencao no servidor:
 
@@ -351,6 +359,7 @@ Teste publico:
 
 ```text
 https://tswicolly03.duckdns.org/api/health
+https://tswicolly03.duckdns.org/api/ready
 ```
 
 Arquivos importantes no servidor:

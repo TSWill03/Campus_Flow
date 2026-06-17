@@ -1,5 +1,6 @@
 // Signature: dev.tswicolly03
 
+import { mkdir } from 'node:fs/promises';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
@@ -53,6 +54,37 @@ export async function buildApp(config: AppConfig, services: AppServices = {}): P
     service: 'campus-flow-backend',
     time: new Date().toISOString()
   }));
+
+  app.get('/ready', async (_request, reply) => {
+    const checks: Record<string, 'ok' | 'error'> = {
+      database: 'ok',
+      storage: 'ok'
+    };
+
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+    } catch (error) {
+      checks.database = 'error';
+      app.log.error({ err: error }, 'Readiness database check failed');
+    }
+
+    try {
+      await mkdir(config.STORAGE_DIR, {
+        recursive: true
+      });
+    } catch (error) {
+      checks.storage = 'error';
+      app.log.error({ err: error }, 'Readiness storage check failed');
+    }
+
+    const ready = Object.values(checks).every((status) => status === 'ok');
+    return reply.status(ready ? 200 : 503).send({
+      status: ready ? 'ready' : 'not_ready',
+      service: 'campus-flow-backend',
+      checks,
+      time: new Date().toISOString()
+    });
+  });
 
   await registerAuthRoutes(app);
   await registerSyncRoutes(app);

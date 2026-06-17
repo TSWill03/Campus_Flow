@@ -214,6 +214,10 @@ for i in $(seq 1 30); do
     exit 1
   fi
 done
+if ! curl -fsS "http://127.0.0.1:$API_PORT/ready" >/dev/null; then
+  echo "API respondeu ao healthcheck, mas nao passou no readiness check (/ready)." >&2
+  exit 1
+fi
 echo "CampusFlow API publicada em https://$DOMAIN/api"
 echo "Se a URL publica nao abrir, libere as portas TCP 80 e 443 no firewall externo da Oracle Cloud/roteador."
 '@
@@ -234,4 +238,4 @@ Assert-LastCommand "executar deploy remoto"
 Remove-Item -LiteralPath $archivePath -Force -ErrorAction SilentlyContinue
 Remove-Item -LiteralPath $localScriptPath -Force -ErrorAction SilentlyContinue
 
-Write-Host "Deploy concluido. Teste: https://$HostName/api/health"
+Write-Host "Deploy concluido. Teste: https://$HostName/api/health e https://$HostName/api/ready"

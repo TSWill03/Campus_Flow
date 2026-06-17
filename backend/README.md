@@ -17,6 +17,7 @@ Backend inicial do CampusFlow para transformar o app offline-first em produto si
 ## O que esta implementado
 
 - `GET /health`
+- `GET /ready`
 - `POST /auth/register`
 - `POST /auth/login`
 - `POST /auth/google`
@@ -53,7 +54,11 @@ Healthcheck:
 
 ```powershell
 Invoke-RestMethod http://localhost:3333/health
+Invoke-RestMethod http://localhost:3333/ready
 ```
+
+`/health` valida apenas que o processo da API esta vivo. `/ready` valida API,
+PostgreSQL/Prisma e a pasta de storage configurada em `STORAGE_DIR`.
 
 ## Variaveis de ambiente
 
@@ -69,6 +74,10 @@ STORAGE_DIR=storage/uploads
 ```
 
 `GOOGLE_CLIENT_ID` deve receber o Client ID Web principal do Google. Se voce tiver IDs extras, por exemplo iOS, coloque-os separados por virgula em `GOOGLE_CLIENT_IDS`.
+
+Use `.env.example` para desenvolvimento/demo local. Para producao, copie
+`.env.production.example` e substitua todos os valores `CHANGE_ME`. Em producao,
+`CORS_ORIGIN=*` e rejeitado de proposito.
 
 ## Sincronizacao
 
@@ -113,9 +122,22 @@ Resposta esperada:
 
 Se o cliente tentar salvar sobre uma versao antiga, o servidor responde `status: "conflict"` com o payload atual do servidor.
 
+Estado atual honesto da sync:
+
+- Implementado: autenticacao, fila local no Flutter, `POST /sync/push`,
+  `GET /sync/pull`, `remoteId` e `syncStatus` apos aceite do push.
+- Parcial: o Flutter ainda nao aplica automaticamente no banco local as
+  mudancas vindas de `/sync/pull`.
+- Pendente: `baseVersion` real de servidor no cliente e tela de resolucao de
+  conflitos.
+
 ## Anexos
 
 O upload atual salva arquivos no disco local do servidor. Para producao, use um volume persistente em VPS ou troque essa camada por S3, Cloudflare R2, Backblaze B2 ou outro storage compativel.
+
+O limite atual do multipart e de ate 8 arquivos por requisicao e 25 MB por
+arquivo. A rota `POST /files/upload` salva um arquivo por chamada no modelo
+atual. Para escala, troque o buffer em memoria por streaming direto para storage.
 
 Campos multipart esperados em `POST /files/upload`:
 
@@ -123,6 +145,25 @@ Campos multipart esperados em `POST /files/upload`:
 - `entityType`
 - `entityId`
 - `category` opcional
+
+## Scripts uteis
+
+Na raiz do repositorio:
+
+```powershell
+.\scripts\check_all.ps1
+```
+
+Somente backend:
+
+```powershell
+cd backend
+.\scripts\check_backend.ps1
+npm run tokens:cleanup
+```
+
+`tokens:cleanup` remove refresh tokens expirados e tokens de reset expirados ou
+ja usados. Ele nao remove usuarios.
 
 ## Deploy
 
@@ -218,6 +259,7 @@ Depois do deploy, teste:
 
 ```text
 https://tswicolly03.duckdns.org/api/health
+https://tswicolly03.duckdns.org/api/ready
 ```
 
 No servidor, os comandos mais importantes sao:
@@ -253,6 +295,7 @@ Passo rapido na Oracle Cloud:
 5. Use `Destination Port Range = 80` na primeira regra.
 6. Use `Destination Port Range = 443` na segunda regra.
 7. Teste `https://tswicolly03.duckdns.org/api/health`.
+8. Teste `https://tswicolly03.duckdns.org/api/ready`.
 
 ## Proximos passos
 

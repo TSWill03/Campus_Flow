@@ -14,7 +14,23 @@ deixe alguns dados de exemplo preparados.
 - Rodar `flutter test`.
 - Abrir o app em Windows ou Chrome.
 - Testar `https://tswicolly03.duckdns.org/api/health` se for mostrar backend.
+- Testar `https://tswicolly03.duckdns.org/api/ready` se for provar banco e storage.
 - Ter um PDF/PPC pequeno ou dados de exemplo para importacao.
+
+## Dados ficticios para preencher se precisar
+
+- Usuario: `Aluno Demo`, `demo@example.com`, senha `SenhaDemo123!`.
+- Perfil: `Ciencia da Computacao`, `Universidade Demo`, campus `Principal`,
+  3200 horas, 8 semestres, 120 horas complementares, 300 de estagio e 320 de
+  extensao.
+- Disciplina: `Algoritmos e Programacao de Computadores`, 72 horas, periodo 1,
+  status `Cursando`.
+- Aula: `Aula 1`, 4 horas, conteudo `Variaveis, tipos primitivos e estruturas
+  de decisao`.
+- Atividade complementar: `Semana Academica Demo`, 20 horas, status `Validado`.
+- Tarefa de estudo: `Resolver lista de algoritmos`, prazo para a proxima semana,
+  prioridade alta.
+- Sessao de estudo: 1h30min revisando algoritmos.
 
 ## Demo principal
 
@@ -25,6 +41,8 @@ Mostre a tela de login e explique:
 - Existe login com email e senha.
 - A senha e protegida com hash/armazenamento seguro.
 - O login com Google foi preparado para plataformas compativeis.
+- Se o servidor estiver indisponivel, o proprio login permite usar modo
+  local/offline para continuar a demo.
 
 ### 2. Dashboard
 
@@ -100,19 +118,33 @@ Mostre a tela de ajustes:
 
 - Exportacao/importacao JSON.
 - Restore point antes de importacao destrutiva.
+- Endpoint ativo do backend.
+- Botao `Testar conexao`.
 - Fila de sincronizacao.
 - Botao de sincronizar.
 - Backend como evolucao para multiplos dispositivos.
 
+Explique com cuidado:
+
+- O push da fila local para o backend ja existe.
+- O pull remoto ja consulta mudancas, mas ainda nao aplica tudo automaticamente
+  no banco local.
+- Por isso, a sync deve ser apresentada como fundacao funcional, nao como
+  multi-dispositivo final.
+
 ## Se algo falhar na hora
 
 - Se o backend estiver offline, explique que o app continua funcionando offline.
+- Se `/health` funcionar e `/ready` falhar, explique que a API esta viva, mas
+  banco ou storage precisam de ajuste.
 - Se o Google nao estiver configurado, use email/senha e explique que OAuth
   exige Client ID do Google Cloud.
 - Se a importacao de PDF nao ler tudo corretamente, explique que PDFs academicos
   variam muito e por isso o app trabalha com preview/edicao antes de salvar.
 - Se a web der erro de storage, rode no Windows para demonstrar persistencia
   local sem depender do navegador.
+- Se a sync falhar, mostre que a fila local registra pendencias e use o plano B
+  em `docs/PLANO_B_DEMO.md`.
 
 ## Fechamento da demo
 

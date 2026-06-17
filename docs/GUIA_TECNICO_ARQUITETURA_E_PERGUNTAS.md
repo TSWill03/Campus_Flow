@@ -425,6 +425,28 @@ Resposta pronta:
 > "O backend e uma API Fastify. O `server.ts` sobe o servidor, o `app.ts` registra
 > plugins e rotas, e os modulos separam autenticacao, sincronizacao e arquivos."
 
+## Healthcheck e readiness
+
+Rotas:
+
+```text
+GET /health
+GET /ready
+```
+
+Explicacao:
+
+- `/health` mostra que o processo da API esta vivo
+- `/ready` valida API, PostgreSQL/Prisma e a pasta de storage
+- se `/health` funciona e `/ready` falha, a API subiu, mas banco ou anexos
+  precisam de ajuste
+
+Resposta pronta:
+
+> "Eu separei liveness de readiness. Isso evita dizer que o backend esta pronto
+> so porque o processo respondeu. Para demo tecnica, `/ready` e o teste mais
+> honesto."
+
 ## Como o backend conecta no banco de dados
 
 Arquivo do Prisma:
@@ -504,8 +526,11 @@ Explicacao:
 
 - por padrao, aponta para `https://tswicolly03.duckdns.org/api`
 - em build, pode trocar usando `--dart-define`
+- ao iniciar, o app le um endpoint salvo em `SharedPreferences`
+- em Ajustes, da para salvar/restaurar endpoint, testar `/health` e limpar para
+  modo local/offline
 - o app usa o servidor automaticamente se existe base URL
-- nao existe toggle para o usuario escolher servidor/local na interface final
+- endpoint vazio e tratado como modo local/offline intencional
 
 Exemplo de build:
 
@@ -534,6 +559,7 @@ O `ApiClient` oferece:
 - headers JSON
 - Authorization Bearer
 - refresh automatico quando recebe 401
+- timeout padrao de 12 segundos
 - tratamento de erro amigavel
 
 Fluxo de uma requisicao autenticada:
@@ -545,7 +571,7 @@ Feature/Repository
   -> envia Authorization: Bearer <token>
   -> se receber 401, chama /auth/refresh
   -> repete a requisicao uma vez
-  -> decodifica JSON ou lança AppException
+  -> decodifica JSON ou lanca AppException
 ```
 
 Onde a sessao remota e guardada:
@@ -720,6 +746,10 @@ Como conflitos sao tratados hoje:
 - backend compara versao base com versao do servidor
 - se cliente estiver atrasado, responde `conflict`
 - app marca como `failed` para tratamento posterior
+- limitacao atual: o Flutter ainda nao envia `baseVersion` real do servidor em
+  todos os casos
+- limitacao atual: o pull remoto ainda nao aplica automaticamente dados baixados
+  no banco local
 
 Resposta pronta:
 
@@ -1056,4 +1086,3 @@ lojas e testes E2E.
 > evolucao para login, multi-dispositivo e sincronizacao. A arquitetura por
 > features, repositorios e providers permite crescer o projeto sem reescrever a
 > interface inteira."
-

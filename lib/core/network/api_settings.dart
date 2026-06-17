@@ -16,8 +16,11 @@ class ApiSettings {
 
   bool get hasServer => normalizedBaseUrl.isNotEmpty;
 
-  String get normalizedBaseUrl =>
-      baseUrl.trim().replaceFirst(RegExp(r'/$'), '');
+  String get normalizedBaseUrl => ApiSettings.normalizeBaseUrl(baseUrl);
+
+  static String normalizeBaseUrl(String value) {
+    return value.trim().replaceFirst(RegExp(r'/+$'), '');
+  }
 
   ApiSettings copyWith({String? baseUrl}) {
     return ApiSettings(baseUrl: baseUrl ?? this.baseUrl);
@@ -29,18 +32,21 @@ class ApiSettingsController extends Notifier<ApiSettings> {
 
   @override
   ApiSettings build() {
-    ref.watch(sharedPreferencesProvider);
-    return ApiSettings(baseUrl: ApiSettings.defaultBaseUrl);
+    final preferences = ref.watch(sharedPreferencesProvider);
+    final savedBaseUrl = preferences.getString(_baseUrlKey);
+    final baseUrl = savedBaseUrl ?? ApiSettings.defaultBaseUrl;
+    return ApiSettings(baseUrl: ApiSettings.normalizeBaseUrl(baseUrl));
   }
 
   Future<void> update(ApiSettings settings) async {
     final preferences = ref.read(sharedPreferencesProvider);
-    final normalized = ApiSettings.defaultBaseUrl.trim().replaceFirst(
-      RegExp(r'/$'),
-      '',
-    );
+    final normalized = ApiSettings.normalizeBaseUrl(settings.baseUrl);
     await preferences.setString(_baseUrlKey, normalized);
     state = settings.copyWith(baseUrl: normalized);
+  }
+
+  Future<void> resetToBuildDefault() {
+    return update(const ApiSettings(baseUrl: ApiSettings.defaultBaseUrl));
   }
 }
 

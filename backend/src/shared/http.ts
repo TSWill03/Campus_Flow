@@ -5,7 +5,7 @@ import { ZodError } from 'zod';
 
 import { AppError } from './errors.js';
 
-export function handleHttpError(error: unknown, _request: FastifyRequest, reply: FastifyReply) {
+export function handleHttpError(error: unknown, request: FastifyRequest, reply: FastifyReply) {
   if (error instanceof ZodError) {
     return reply.status(400).send({
       error: 'validation_error',
@@ -21,9 +21,11 @@ export function handleHttpError(error: unknown, _request: FastifyRequest, reply:
     });
   }
 
+  request.log.error({ err: error }, 'Unhandled request error');
   const fallback = error instanceof Error ? error.message : 'Unexpected server error.';
+  const message = request.server.config.NODE_ENV === 'production' ? 'Erro interno do servidor.' : fallback;
   return reply.status(500).send({
     error: 'internal_error',
-    message: fallback
+    message
   });
 }

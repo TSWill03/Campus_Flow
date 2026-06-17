@@ -35,21 +35,29 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   bool _processingBackup = false;
   bool _syncingNow = false;
   bool _discardingSyncQueue = false;
+  bool _testingApiConnection = false;
+  bool _apiSettingsDirty = false;
   late final TextEditingController _colorProfileNameController;
+  late final TextEditingController _apiBaseUrlController;
   bool _colorProfileDirty = false;
 
   @override
   void initState() {
     super.initState();
     final initialProfile = ref.read(colorProfileControllerProvider);
+    final initialApiSettings = ref.read(apiSettingsControllerProvider);
     _colorProfileNameController = TextEditingController(
       text: initialProfile.name,
+    );
+    _apiBaseUrlController = TextEditingController(
+      text: initialApiSettings.normalizedBaseUrl,
     );
   }
 
   @override
   void dispose() {
     _colorProfileNameController.dispose();
+    _apiBaseUrlController.dispose();
     super.dispose();
   }
 
@@ -72,6 +80,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     if (!_colorProfileDirty &&
         _colorProfileNameController.text != colorProfile.name) {
       _colorProfileNameController.text = colorProfile.name;
+    }
+    if (!_apiSettingsDirty &&
+        _apiBaseUrlController.text != apiSettings.normalizedBaseUrl) {
+      _apiBaseUrlController.text = apiSettings.normalizedBaseUrl;
     }
     return ListView(
       children: [
@@ -126,7 +138,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'O CampusFlow se conecta automaticamente ao backend configurado no codigo. Nao e necessario ativar login remoto manualmente.',
+                  'O CampusFlow usa o endpoint configurado no build ou salvo neste dispositivo. Se o servidor cair durante a apresentacao, limpe o endpoint para usar o modo local/offline.',
                 ),
                 const SizedBox(height: 16),
                 Card(
@@ -155,7 +167,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 style: Theme.of(context).textTheme.titleMedium,
                               ),
                               const SizedBox(height: 4),
-                              Text(apiSettings.normalizedBaseUrl),
+                              Text(
+                                apiSettings.hasServer
+                                    ? apiSettings.normalizedBaseUrl
+                                    : 'Modo local/offline ativo neste dispositivo.',
+                              ),
                             ],
                           ),
                         ),
@@ -164,10 +180,53 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                TextField(
+                  controller: _apiBaseUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'Endpoint da API',
+                    helperText:
+                        'Exemplo: https://tswicolly03.duckdns.org/api. Deixe vazio apenas para modo offline/local.',
+                  ),
+                  keyboardType: TextInputType.url,
+                  onChanged: (_) {
+                    setState(() => _apiSettingsDirty = true);
+                  },
+                ),
+                const SizedBox(height: 12),
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
                   children: [
+                    FilledButton.icon(
+                      onPressed: _apiSettingsDirty ? _saveApiEndpoint : null,
+                      icon: const Icon(Icons.save_rounded),
+                      label: const Text('Salvar endpoint'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _testingApiConnection || !apiSettings.hasServer
+                          ? null
+                          : _testApiConnection,
+                      icon: _testingApiConnection
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.wifi_tethering_rounded),
+                      label: const Text('Testar conexao'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _resetApiEndpoint,
+                      icon: const Icon(Icons.restore_rounded),
+                      label: const Text('Restaurar padrao do build'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: apiSettings.hasServer
+                          ? _clearApiEndpoint
+                          : null,
+                      icon: const Icon(Icons.cloud_off_rounded),
+                      label: const Text('Usar modo local/offline'),
+                    ),
                     OutlinedButton.icon(
                       onPressed: _syncingNow || !apiSettings.hasServer
                           ? null
@@ -624,6 +683,111 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   Future<void> _signOut() async {
     await ref.read(authControllerProvider.notifier).signOut();
+  }
+
+  Future<void> _saveApiEndpoint() async {
+    final normalized = ApiSettings.normalizeBaseUrl(_apiBaseUrlController.text);
+    await ref
+        .read(apiSettingsControllerProvider.notifier)
+        .update(ApiSettings(baseUrl: normalized));
+    await ref.read(authControllerProvider.notifier).refresh();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() => _apiSettingsDirty = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          normalized.isEmpty
+              ? 'Modo local/offline ativado neste dispositivo.'
+              : 'Endpoint salvo: $normalized',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _resetApiEndpoint() async {
+    await ref
+        .read(apiSettingsControllerProvider.notifier)
+        .resetToBuildDefault();
+    final settings = ref.read(apiSettingsControllerProvider);
+    await ref.read(authControllerProvider.notifier).refresh();
+
+    if (!mounted) {
+      return;
+    }
+
+    _apiBaseUrlController.text = settings.normalizedBaseUrl;
+    setState(() => _apiSettingsDirty = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Endpoint restaurado: ${settings.normalizedBaseUrl}'),
+      ),
+    );
+  }
+
+  Future<void> _clearApiEndpoint() async {
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Usar modo local/offline?'),
+            content: const Text(
+              'Isso nao apaga dados. O login e a sincronizacao remotos deixam de ser usados neste dispositivo ate voce salvar um endpoint novamente.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Usar offline'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed) {
+      return;
+    }
+
+    _apiBaseUrlController.clear();
+    await _saveApiEndpoint();
+  }
+
+  Future<void> _testApiConnection() async {
+    setState(() => _testingApiConnection = true);
+    Object? failure;
+    Map<String, dynamic>? response;
+    try {
+      response = await ref
+          .read(apiClientProvider)
+          .get('/health', authenticated: false);
+    } catch (error) {
+      failure = error;
+    } finally {
+      if (mounted) {
+        setState(() => _testingApiConnection = false);
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          failure != null
+              ? 'Nao foi possivel conectar: $failure'
+              : 'Servidor respondeu: ${response?['status'] ?? 'ok'}.',
+        ),
+      ),
+    );
   }
 
   Future<void> _syncNow() async {

@@ -86,5 +86,73 @@ void main() {
         ),
       );
     });
+
+    test('throws friendly message when the server is unreachable', () async {
+      final secureStore = MemoryAuthSecureStore();
+      final client = ApiClient(
+        settings: const ApiSettings(baseUrl: 'https://example.com/api'),
+        sessionStore: ApiSessionStore(secureStore: secureStore),
+        httpClient: MockClient(
+          (_) async => throw http.ClientException('Failed to fetch'),
+        ),
+      );
+
+      expect(
+        () => client.get('/health', authenticated: false),
+        throwsA(
+          isA<AppException>().having(
+            (error) => error.message,
+            'message',
+            contains('Nao foi possivel conectar'),
+          ),
+        ),
+      );
+    });
+
+    test('throws friendly message on request timeout', () async {
+      final secureStore = MemoryAuthSecureStore();
+      final client = ApiClient(
+        settings: const ApiSettings(baseUrl: 'https://example.com/api'),
+        sessionStore: ApiSessionStore(secureStore: secureStore),
+        requestTimeout: const Duration(milliseconds: 1),
+        httpClient: MockClient((_) async {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+          return http.Response(jsonEncode({'ok': true}), 200);
+        }),
+      );
+
+      expect(
+        () => client.get('/health', authenticated: false),
+        throwsA(
+          isA<AppException>().having(
+            (error) => error.message,
+            'message',
+            contains('demorou'),
+          ),
+        ),
+      );
+    });
+
+    test('throws friendly message when a proxy returns HTML as success', () {
+      final secureStore = MemoryAuthSecureStore();
+      final client = ApiClient(
+        settings: const ApiSettings(baseUrl: 'https://example.com/api'),
+        sessionStore: ApiSessionStore(secureStore: secureStore),
+        httpClient: MockClient(
+          (_) async => http.Response('<html>proxy</html>', 200),
+        ),
+      );
+
+      expect(
+        () => client.get('/health', authenticated: false),
+        throwsA(
+          isA<AppException>().having(
+            (error) => error.message,
+            'message',
+            contains('Resposta invalida do servidor'),
+          ),
+        ),
+      );
+    });
   });
 }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_settings.dart';
 import '../../domain/entities/google_auth_identity.dart';
 import '../../../../shared/widgets/form_submission_state.dart';
 import '../providers/auth_providers.dart';
@@ -63,6 +64,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final theme = Theme.of(context);
     final authState = ref.watch(authControllerProvider);
     final submission = ref.watch(loginFormControllerProvider);
+    final apiSettings = ref.watch(apiSettingsControllerProvider);
     final effectiveMode = _resolveMode(authState.hasAccount);
 
     ref.listen<FormSubmissionState>(loginFormControllerProvider, (
@@ -146,7 +148,71 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                             ? 'Entre com email e senha ou use uma conta Google vinculada ao servidor.'
                                             : 'Sua conta sera criada no servidor do CampusFlow para sincronizar seus dados entre dispositivos.',
                                       ),
-                                      const SizedBox(height: 24),
+                                      const SizedBox(height: 16),
+                                      Card(
+                                        color: theme
+                                            .colorScheme
+                                            .surfaceContainerHighest,
+                                        elevation: 0,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(14),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Icon(
+                                                apiSettings.hasServer
+                                                    ? Icons.cloud_done_rounded
+                                                    : Icons.cloud_off_rounded,
+                                                color: apiSettings.hasServer
+                                                    ? theme.colorScheme.primary
+                                                    : theme.colorScheme.error,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      apiSettings.hasServer
+                                                          ? 'Servidor remoto ativo'
+                                                          : 'Modo local/offline ativo',
+                                                      style: theme
+                                                          .textTheme
+                                                          .titleSmall,
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      apiSettings.hasServer
+                                                          ? apiSettings
+                                                                .normalizedBaseUrl
+                                                          : 'Os dados ficam neste dispositivo ate voce restaurar o endpoint.',
+                                                      style: theme
+                                                          .textTheme
+                                                          .bodySmall,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              TextButton(
+                                                onPressed: submission.isLoading
+                                                    ? null
+                                                    : apiSettings.hasServer
+                                                    ? _clearApiEndpoint
+                                                    : _resetApiEndpoint,
+                                                child: Text(
+                                                  apiSettings.hasServer
+                                                      ? 'Usar offline'
+                                                      : 'Restaurar servidor',
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
                                       SegmentedButton<_LoginMode>(
                                         segments: const [
                                           ButtonSegment(
@@ -391,6 +457,65 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _mode = hasAccount ? _LoginMode.signIn : _LoginMode.register;
     }
     return _mode!;
+  }
+
+  Future<void> _clearApiEndpoint() async {
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Usar modo local/offline?'),
+            content: const Text(
+              'Isso nao apaga dados. O app deixa de usar login remoto neste dispositivo ate voce restaurar o endpoint.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Usar offline'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed) {
+      return;
+    }
+
+    await ref
+        .read(apiSettingsControllerProvider.notifier)
+        .update(const ApiSettings(baseUrl: ''));
+    await ref.read(authControllerProvider.notifier).refresh();
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Modo local/offline ativado.')),
+    );
+  }
+
+  Future<void> _resetApiEndpoint() async {
+    await ref
+        .read(apiSettingsControllerProvider.notifier)
+        .resetToBuildDefault();
+    await ref.read(authControllerProvider.notifier).refresh();
+
+    if (!mounted) {
+      return;
+    }
+
+    final settings = ref.read(apiSettingsControllerProvider);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Servidor restaurado: ${settings.normalizedBaseUrl}'),
+      ),
+    );
   }
 
   Future<void> _submit(_LoginMode mode) async {

@@ -23,6 +23,10 @@ export type AppConfig = z.infer<typeof envSchema> & {
 
 export function loadConfig(): AppConfig {
   const parsed = envSchema.parse(process.env);
+  if (parsed.NODE_ENV === 'production' && parsed.CORS_ORIGIN.trim() === '*') {
+    throw new Error('CORS_ORIGIN must not be "*" in production.');
+  }
+
   return {
     ...parsed,
     googleClientIds: [

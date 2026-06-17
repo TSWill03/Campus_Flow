@@ -1,5 +1,6 @@
 // Signature: dev.tswicolly03
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -13,13 +14,16 @@ class ApiClient {
     required ApiSettings settings,
     required ApiSessionStore sessionStore,
     http.Client? httpClient,
+    Duration requestTimeout = const Duration(seconds: 12),
   }) : _settings = settings,
        _sessionStore = sessionStore,
-       _httpClient = httpClient ?? http.Client();
+       _httpClient = httpClient ?? http.Client(),
+       _requestTimeout = requestTimeout;
 
   final ApiSettings _settings;
   final ApiSessionStore _sessionStore;
   final http.Client _httpClient;
+  final Duration _requestTimeout;
 
   Future<Map<String, dynamic>> get(
     String path, {
@@ -58,13 +62,13 @@ class ApiClient {
   }) async {
     _ensureConfigured();
 
-    var response = await request();
+    var response = await _performRequest(request);
     // Se o access token venceu, o client tenta renovar usando refresh token e
     // repete a chamada uma vez. A tela nao precisa conhecer esse detalhe.
     if (authenticated && response.statusCode == 401) {
       final refreshed = await _refreshSession();
       if (refreshed) {
-        response = await request();
+        response = await _performRequest(request);
       }
     }
 
@@ -108,13 +112,15 @@ class ApiClient {
       return false;
     }
 
-    final response = await _httpClient.post(
-      _uri('/auth/refresh'),
-      headers: const {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: jsonEncode({'refreshToken': session.refreshToken}),
+    final response = await _performRequest(
+      () => _httpClient.post(
+        _uri('/auth/refresh'),
+        headers: const {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({'refreshToken': session.refreshToken}),
+      ),
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       await _sessionStore.clear();
@@ -124,6 +130,33 @@ class ApiClient {
     final decoded = _decodeObject(response);
     await _sessionStore.write(_sessionFromAuthResponse(decoded));
     return true;
+  }
+
+  Future<http.Response> _performRequest(
+    Future<http.Response> Function() request,
+  ) async {
+    try {
+      return await request().timeout(_requestTimeout);
+    } on TimeoutException {
+      throw const AppException(
+        'O servidor demorou para responder. Tente novamente em instantes.',
+      );
+    } on FormatException {
+      throw const AppException(
+        'A URL do servidor e invalida. Confira o endpoint em Ajustes.',
+      );
+    } on http.ClientException {
+      throw const AppException(
+        'Nao foi possivel conectar ao servidor do CampusFlow. '
+        'Verifique sua internet, HTTPS e se a API esta online.',
+      );
+    } on AppException {
+      rethrow;
+    } catch (_) {
+      throw const AppException(
+        'Nao foi possivel comunicar com o servidor do CampusFlow.',
+      );
+    }
   }
 
   Uri _uri(String path, {Map<String, String>? queryParameters}) {
@@ -160,7 +193,15 @@ Map<String, dynamic> _decodeObject(http.Response response) {
   if (response.body.isEmpty) {
     return <String, dynamic>{};
   }
-  final decoded = jsonDecode(response.body);
+  final Object? decoded;
+  try {
+    decoded = jsonDecode(response.body);
+  } on FormatException {
+    throw const AppException(
+      'Resposta invalida do servidor. Confira se a URL aponta para a API '
+      'do CampusFlow e nao para uma pagina HTML.',
+    );
+  }
   if (decoded is! Map<String, dynamic>) {
     throw const AppException('Resposta invalida do servidor.');
   }
