@@ -182,10 +182,13 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
   }
 
   @override
-  Future<List<StudySession>> getAllSessions() async {
-    final rows = await (_database.select(
-      _database.studySessions,
-    )..where((table) => table.isDeleted.equals(false))).get();
+  Future<List<StudySession>> getAllSessions({String? academicProfileId}) async {
+    final query = _database.select(_database.studySessions)
+      ..where((table) => table.isDeleted.equals(false));
+    if (academicProfileId != null && academicProfileId.isNotEmpty) {
+      query.where((table) => table.academicProfileId.equals(academicProfileId));
+    }
+    final rows = await query.get();
     return rows.map(_mapSession).toList();
   }
 
@@ -226,6 +229,7 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
               updatedAt: Value(session.updatedAt),
               syncStatus: Value(session.syncStatus.name),
               isDeleted: Value(session.isDeleted),
+              academicProfileId: Value(session.academicProfileId),
               studySubjectId: Value(session.studySubjectId),
               studyTopicId: Value(session.studyTopicId),
               startedAt: Value(session.startedAt),
@@ -329,10 +333,13 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
   }
 
   @override
-  Stream<List<StudySession>> watchSessions() {
+  Stream<List<StudySession>> watchSessions({String? academicProfileId}) {
     final query = _database.select(_database.studySessions)
       ..where((table) => table.isDeleted.equals(false))
       ..orderBy([(table) => OrderingTerm.desc(table.startedAt)]);
+    if (academicProfileId != null && academicProfileId.isNotEmpty) {
+      query.where((table) => table.academicProfileId.equals(academicProfileId));
+    }
     return query.watch().map((rows) => rows.map(_mapSession).toList());
   }
 
@@ -375,6 +382,7 @@ class DriftStudyManagerRepository implements StudyManagerRepository {
       updatedAt: row.updatedAt,
       syncStatus: SyncStatus.values.byName(row.syncStatus),
       isDeleted: row.isDeleted,
+      academicProfileId: row.academicProfileId,
       studySubjectId: row.studySubjectId,
       studyTopicId: row.studyTopicId,
       startedAt: row.startedAt,

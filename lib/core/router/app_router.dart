@@ -22,6 +22,7 @@ import '../../features/extension_activities/presentation/widgets/extension_activ
 import '../../features/extension_activities/presentation/widgets/extension_activity_form_page.dart';
 import '../../features/internships/presentation/widgets/internship_form_page.dart';
 import '../../features/internships/presentation/widgets/internships_page.dart';
+import '../../features/settings/presentation/pages/feedback_report_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/study_manager/presentation/pages/study_manager_page.dart';
 import '../../features/study_manager/presentation/pages/study_session_form_page.dart';
@@ -123,6 +124,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/settings',
             builder: (context, state) => const SettingsPage(),
+          ),
+          GoRoute(
+            path: '/feedback',
+            builder: (context, state) => const FeedbackReportPage(),
           ),
         ],
       ),

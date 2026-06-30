@@ -16,6 +16,7 @@ abstract class StudySession with _$StudySession {
     required DateTime updatedAt,
     required SyncStatus syncStatus,
     required bool isDeleted,
+    String? academicProfileId,
     String? studySubjectId,
     String? studyTopicId,
     required DateTime startedAt,

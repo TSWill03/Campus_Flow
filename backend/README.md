@@ -32,6 +32,9 @@ Backend inicial do CampusFlow para transformar o app offline-first em produto si
 - `GET /files`
 - `GET /files/:id/download`
 - `DELETE /files/:id`
+- `POST /feedback/report`
+- `GET /admin/error-reports`
+- `PATCH /admin/error-reports/:id/status`
 
 ## Rodar localmente
 
@@ -57,6 +60,13 @@ Invoke-RestMethod http://localhost:3333/health
 Invoke-RestMethod http://localhost:3333/ready
 ```
 
+Para rodar banco e API juntos pelo Docker:
+
+```powershell
+cd backend
+docker compose up -d --build api
+```
+
 `/health` valida apenas que o processo da API esta vivo. `/ready` valida API,
 PostgreSQL/Prisma e a pasta de storage configurada em `STORAGE_DIR`.
 
@@ -71,6 +81,7 @@ CORS_ORIGIN=https://tswicolly03.duckdns.org,http://localhost:*,http://127.0.0.1:
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_IDS=
 STORAGE_DIR=storage/uploads
+ADMIN_API_TOKEN=dev-admin-token-with-at-least-32-characters
 ```
 
 `GOOGLE_CLIENT_ID` deve receber o Client ID Web principal do Google. Se voce tiver IDs extras, por exemplo iOS, coloque-os separados por virgula em `GOOGLE_CLIENT_IDS`.
@@ -78,6 +89,98 @@ STORAGE_DIR=storage/uploads
 Use `.env.example` para desenvolvimento/demo local. Para producao, copie
 `.env.production.example` e substitua todos os valores `CHANGE_ME`. Em producao,
 `CORS_ORIGIN=*` e rejeitado de proposito.
+
+`ADMIN_API_TOKEN` protege as rotas `/admin/*`. Use um valor longo e aleatorio,
+somente no ambiente operacional. A API aceita o token em `x-admin-token` ou em
+`Authorization: Bearer <token>`.
+
+## Reports de erro e feedback
+
+O endpoint publico para reports e:
+
+```text
+POST /feedback/report
+```
+
+Ele aceita envio anonimo e tambem associa `userId` quando o cliente envia um
+access token valido. Payload esperado:
+
+```json
+{
+  "type": "crash",
+  "severity": "high",
+  "message": "Unhandled exception",
+  "userDescription": "Opcional",
+  "stackTrace": "Opcional",
+  "platform": "web",
+  "appVersion": "1.0.0",
+  "buildNumber": "1",
+  "route": "/settings",
+  "deviceIdHash": "hash-anonimo",
+  "extra": {
+    "source": "global_error_handler"
+  }
+}
+```
+
+Valores aceitos:
+
+- `type`: `crash`, `error`, `feedback`, `sync_error`, `login_error`
+- `severity`: `low`, `medium`, `high`, `critical`
+
+Resposta:
+
+```json
+{
+  "reportId": "uuid",
+  "requestId": "uuid"
+}
+```
+
+O backend valida com Zod, limita o corpo da rota, corta campos grandes e
+sanitiza chaves/valores com padrao de senha, token, cookie, authorization e
+secret antes de salvar no PostgreSQL.
+
+### Admin de reports
+
+Listar reports:
+
+```powershell
+$headers = @{ "x-admin-token" = $env:CAMPUSFLOW_ADMIN_API_TOKEN }
+Invoke-RestMethod "http://localhost:3333/admin/error-reports?limit=50" -Headers $headers
+```
+
+Filtros opcionais:
+
+```text
+status=open
+severity=high
+type=crash
+limit=50
+```
+
+Atualizar status:
+
+```powershell
+$body = @{ status = "triaged" } | ConvertTo-Json
+Invoke-RestMethod "http://localhost:3333/admin/error-reports/<reportId>/status" `
+  -Method Patch `
+  -Headers ($headers + @{ "Content-Type" = "application/json" }) `
+  -Body $body
+```
+
+Status aceitos: `open`, `triaged`, `resolved`, `ignored`.
+
+## Tratamento de erros e observabilidade
+
+- Toda resposta de erro inclui `requestId`.
+- O header `x-request-id` tambem e devolvido na resposta.
+- Zod retorna `validation_error`.
+- Erros internos em producao retornam mensagem generica.
+- Logs de erro nao registram body completo, Authorization, refresh token, senha,
+  payload completo de sync ou arquivos.
+- Rate limit basico esta ativo em `/auth/login`, `/auth/register`,
+  `/auth/password/forgot` e `/feedback/report`.
 
 ## Sincronizacao
 
@@ -299,9 +402,9 @@ Passo rapido na Oracle Cloud:
 
 ## Proximos passos
 
-- Integrar o Flutter com `/auth/*` e substituir o login local por login remoto quando o usuario ativar sync.
-- Mapear a fila local `sync_queue` do app para `/sync/push`.
-- Atualizar `remoteId`, `syncStatus` e `entityVersion` no app apos resposta do servidor.
+- Aplicar as mudancas de `/sync/pull` no Drift local com mappers por entidade.
+- Persistir `entityVersion` real por entidade local.
+- Criar UX de resolucao de conflitos.
 - Trocar storage local por S3/R2 antes de vender em escala.
 - Adicionar envio real de email para recuperacao de senha.
 - Criar planos/pagamentos com Stripe, Mercado Pago, Paddle ou loja da Microsoft.

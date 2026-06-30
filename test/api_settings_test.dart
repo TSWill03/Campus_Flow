@@ -27,6 +27,34 @@ void main() {
       expect(settings.hasServer, isTrue);
     });
 
+    test('migrates the old remote default to the local fallback', () async {
+      SharedPreferences.setMockInitialValues({
+        'api_base_url': 'https://tswicolly03.duckdns.org/api',
+      });
+      final preferences = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
+      );
+      addTearDown(container.dispose);
+
+      final settings = container.read(apiSettingsControllerProvider);
+
+      expect(settings.normalizedBaseUrl, 'http://localhost:3333');
+      expect(settings.isLocalServer, isTrue);
+      expect(settings.hasServer, isTrue);
+    });
+
+    test('identifies local server endpoints', () {
+      expect(
+        const ApiSettings(baseUrl: 'http://localhost:3333').isLocalServer,
+        isTrue,
+      );
+      expect(
+        const ApiSettings(baseUrl: 'https://api.example.com').isLocalServer,
+        isFalse,
+      );
+    });
+
     test(
       'saves the informed endpoint instead of forcing the default',
       () async {

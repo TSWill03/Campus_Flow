@@ -36,9 +36,9 @@ abstract interface class StudyManagerRepository {
 
   Future<void> deleteTask(String id);
 
-  Stream<List<StudySession>> watchSessions();
+  Stream<List<StudySession>> watchSessions({String? academicProfileId});
 
-  Future<List<StudySession>> getAllSessions();
+  Future<List<StudySession>> getAllSessions({String? academicProfileId});
 
   Future<StudySession?> findSessionById(String id);
 

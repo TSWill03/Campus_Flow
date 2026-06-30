@@ -26,7 +26,7 @@ void main() {
     });
 
     test(
-      'ignores orphaned academic records when there is no active profile',
+      'ignores academic and study records when there is no active profile',
       () async {
         final now = DateTime(2026, 3, 20, 14);
         await database
@@ -83,9 +83,68 @@ void main() {
         expect(summary.completedSubjects, 0);
         expect(summary.pendingSubjects, 0);
         expect(summary.courseCompletionPercentage, 0);
-        expect(summary.totalStudySessions, 1);
-        expect(summary.totalStudyMinutes, 50);
+        expect(summary.totalStudySessions, 0);
+        expect(summary.totalStudyMinutes, 0);
       },
     );
+
+    test('counts study sessions only for the selected profile', () async {
+      final now = DateTime(2026, 3, 20, 14);
+      for (final profileId in ['profile-1', 'profile-2']) {
+        await database
+            .into(database.academicProfiles)
+            .insert(
+              AcademicProfilesCompanion.insert(
+                id: profileId,
+                createdAt: now,
+                updatedAt: now,
+                syncStatus: SyncStatus.synced.name,
+                profileName: Value(profileId),
+                courseName: 'BCC',
+                institution: 'IF',
+                totalCourseHours: 3200,
+                semesterCount: 8,
+                requiredComplementaryHours: 100,
+                requiredInternshipHours: 0,
+                requiredExtensionHours: 320,
+              ),
+            );
+      }
+      await database
+          .into(database.studySessions)
+          .insert(
+            StudySessionsCompanion.insert(
+              id: 'session-1',
+              createdAt: now,
+              updatedAt: now,
+              syncStatus: SyncStatus.synced.name,
+              academicProfileId: const Value('profile-1'),
+              startedAt: now,
+              endedAt: now.add(const Duration(minutes: 50)),
+              durationMinutes: 50,
+            ),
+          );
+      await database
+          .into(database.studySessions)
+          .insert(
+            StudySessionsCompanion.insert(
+              id: 'session-2',
+              createdAt: now,
+              updatedAt: now,
+              syncStatus: SyncStatus.synced.name,
+              academicProfileId: const Value('profile-2'),
+              startedAt: now,
+              endedAt: now.add(const Duration(minutes: 90)),
+              durationMinutes: 90,
+            ),
+          );
+
+      final summary = await repository
+          .watchSummary(academicProfileId: 'profile-1')
+          .first;
+
+      expect(summary.totalStudySessions, 1);
+      expect(summary.totalStudyMinutes, 50);
+    });
   });
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/database_providers.dart';
 import '../../../../core/sync/sync_queue_service.dart';
+import '../../../academic_profile/presentation/providers/academic_profile_provider.dart';
 import '../../data/repositories/drift_study_manager_repository.dart';
 import '../../domain/entities/study_session.dart';
 import '../../domain/entities/study_subject.dart';
@@ -22,13 +23,17 @@ final studySubjectsProvider = StreamProvider<List<StudySubject>>(
   (ref) => ref.watch(studyManagerRepositoryProvider).watchSubjects(),
 );
 
-final studySubjectByIdProvider =
-    FutureProvider.family<StudySubject?, String>((ref, id) {
+final studySubjectByIdProvider = FutureProvider.family<StudySubject?, String>((
+  ref,
+  id,
+) {
   return ref.watch(studyManagerRepositoryProvider).findSubjectById(id);
 });
 
-final studyTopicsProvider =
-    StreamProvider.family<List<StudyTopic>, String>((ref, subjectId) {
+final studyTopicsProvider = StreamProvider.family<List<StudyTopic>, String>((
+  ref,
+  subjectId,
+) {
   return ref.watch(studyManagerRepositoryProvider).watchTopics(subjectId);
 });
 
@@ -36,8 +41,10 @@ final studyAllTopicsProvider = FutureProvider<List<StudyTopic>>((ref) {
   return ref.watch(studyManagerRepositoryProvider).getAllTopics();
 });
 
-final studyTopicByIdProvider =
-    FutureProvider.family<StudyTopic?, String>((ref, id) {
+final studyTopicByIdProvider = FutureProvider.family<StudyTopic?, String>((
+  ref,
+  id,
+) {
   return ref.watch(studyManagerRepositoryProvider).findTopicById(id);
 });
 
@@ -45,16 +52,29 @@ final studyTasksProvider = StreamProvider<List<StudyTask>>(
   (ref) => ref.watch(studyManagerRepositoryProvider).watchTasks(),
 );
 
-final studyTaskByIdProvider =
-    FutureProvider.family<StudyTask?, String>((ref, id) {
+final studyTaskByIdProvider = FutureProvider.family<StudyTask?, String>((
+  ref,
+  id,
+) {
   return ref.watch(studyManagerRepositoryProvider).findTaskById(id);
 });
 
-final studySessionsProvider = StreamProvider<List<StudySession>>(
-  (ref) => ref.watch(studyManagerRepositoryProvider).watchSessions(),
-);
+final studySessionsProvider = StreamProvider<List<StudySession>>((ref) {
+  final activeProfileId = ref
+      .watch(activeAcademicProfileProvider)
+      .valueOrNull
+      ?.id;
+  if (activeProfileId == null || activeProfileId.isEmpty) {
+    return Stream.value(const <StudySession>[]);
+  }
+  return ref
+      .watch(studyManagerRepositoryProvider)
+      .watchSessions(academicProfileId: activeProfileId);
+});
 
-final studySessionByIdProvider =
-    FutureProvider.family<StudySession?, String>((ref, id) {
+final studySessionByIdProvider = FutureProvider.family<StudySession?, String>((
+  ref,
+  id,
+) {
   return ref.watch(studyManagerRepositoryProvider).findSessionById(id);
 });

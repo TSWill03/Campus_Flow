@@ -1,15 +1,18 @@
 // Signature: dev.tswicolly03
 
 import { mkdir } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
+import rateLimit from '@fastify/rate-limit';
 import type { PrismaClient } from '@prisma/client';
 import Fastify, { type FastifyInstance } from 'fastify';
 
 import type { AppConfig } from './config/env.js';
 import { createPrismaClient } from './db/prisma.js';
 import { registerAuthRoutes } from './modules/auth/auth.routes.js';
+import { registerFeedbackRoutes } from './modules/feedback/feedback.routes.js';
 import { registerFileRoutes } from './modules/files/file.routes.js';
 import { registerSyncRoutes } from './modules/sync/sync.routes.js';
 import { handleHttpError } from './shared/http.js';
@@ -22,7 +25,14 @@ export type AppServices = {
 // services, enquanto producao usa o cliente real criado em createPrismaClient.
 export async function buildApp(config: AppConfig, services: AppServices = {}): Promise<FastifyInstance> {
   const app = Fastify({
-    logger: config.NODE_ENV !== 'test'
+    bodyLimit: 1024 * 1024,
+    logger: config.NODE_ENV !== 'test',
+    genReqId: (request) => {
+      const requestId = request.headers['x-request-id'];
+      return typeof requestId === 'string' && /^[a-zA-Z0-9._:-]{8,120}$/.test(requestId)
+        ? requestId
+        : randomUUID();
+    }
   });
   const prisma = services.prisma ?? createPrismaClient();
 
@@ -46,8 +56,24 @@ export async function buildApp(config: AppConfig, services: AppServices = {}): P
       fileSize: 25 * 1024 * 1024
     }
   });
+  await app.register(rateLimit, {
+    global: false
+  });
 
   app.setErrorHandler(handleHttpError);
+  app.addHook('onRequest', async (request, reply) => {
+    reply.header('x-request-id', request.id);
+  });
+
+  app.get('/', async () => ({
+    status: 'ok',
+    service: 'campus-flow-backend',
+    message: 'CampusFlow API is running.',
+    endpoints: {
+      health: '/health',
+      ready: '/ready'
+    }
+  }));
 
   app.get('/health', async () => ({
     status: 'ok',
@@ -89,6 +115,7 @@ export async function buildApp(config: AppConfig, services: AppServices = {}): P
   await registerAuthRoutes(app);
   await registerSyncRoutes(app);
   await registerFileRoutes(app);
+  await registerFeedbackRoutes(app);
 
   app.addHook('onClose', async () => {
     await prisma.$disconnect();

@@ -2,8 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/backup/backup_service.dart';
+import '../../../../core/feedback/error_report_providers.dart';
 import '../../../../core/network/api_settings.dart';
 import '../../../../core/sync/remote_sync_service.dart';
 import '../../../../core/sync/sync_queue_service.dart';
@@ -72,10 +74,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       backupRestorePointCreatedAtProvider,
     );
     final syncOverview = ref.watch(syncQueueOverviewProvider);
+    final queuedReports = ref.watch(queuedErrorReportCountProvider);
     final syncDeviceId = ref.watch(syncDeviceIdProvider);
     final syncInfo = ref.watch(syncQueueServiceProvider);
     final authState = ref.watch(authControllerProvider);
     final apiSettings = ref.watch(apiSettingsControllerProvider);
+    final currentSyncOverview = syncOverview.valueOrNull;
 
     if (!_colorProfileDirty &&
         _colorProfileNameController.text != colorProfile.name) {
@@ -180,12 +184,44 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                Card(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Wrap(
+                      spacing: 18,
+                      runSpacing: 10,
+                      children: [
+                        _StatusPill(
+                          icon: Icons.cloud_queue_rounded,
+                          label: 'Conexao',
+                          value: _connectionStatusLabel(apiSettings),
+                        ),
+                        _StatusPill(
+                          icon: Icons.sync_rounded,
+                          label: 'Sync',
+                          value: _syncStatusLabel(
+                            apiSettings,
+                            currentSyncOverview,
+                          ),
+                        ),
+                        _StatusPill(
+                          icon: Icons.bug_report_rounded,
+                          label: 'Reports',
+                          value:
+                              '${queuedReports.valueOrNull ?? 0} aguardando reenvio',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _apiBaseUrlController,
                   decoration: const InputDecoration(
                     labelText: 'Endpoint da API',
                     helperText:
-                        'Exemplo: https://tswicolly03.duckdns.org/api. Deixe vazio apenas para modo offline/local.',
+                        'Exemplo local: http://localhost:3333. Deixe vazio apenas para modo offline/local.',
                   ),
                   keyboardType: TextInputType.url,
                   onChanged: (_) {
@@ -252,6 +288,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             )
                           : const Icon(Icons.cleaning_services_rounded),
                       label: const Text('Descartar fila antiga'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () => context.go('/feedback'),
+                      icon: const Icon(Icons.bug_report_rounded),
+                      label: const Text('Reportar erro ou feedback'),
                     ),
                   ],
                 ),
@@ -767,6 +808,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       response = await ref
           .read(apiClientProvider)
           .get('/health', authenticated: false);
+      await ref.read(errorReportServiceProvider).flushQueuedReports();
+      ref.invalidate(queuedErrorReportCountProvider);
     } catch (error) {
       failure = error;
     } finally {
@@ -875,6 +918,54 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               : 'Fila antiga descartada: $deleted registros removidos.',
         ),
       ),
+    );
+  }
+}
+
+String _connectionStatusLabel(ApiSettings settings) {
+  if (!settings.hasServer) {
+    return 'offline';
+  }
+  return settings.isLocalServer ? 'local configurado' : 'remoto configurado';
+}
+
+String _syncStatusLabel(ApiSettings settings, SyncQueueOverview? overview) {
+  if (!settings.hasServer) {
+    return 'offline';
+  }
+  if (overview == null) {
+    return 'carregando';
+  }
+  if (overview.failedCount > 0) {
+    return 'falhou';
+  }
+  if (overview.pendingCount > 0) {
+    return 'pendente';
+  }
+  return 'sincronizado';
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18),
+        const SizedBox(width: 8),
+        Text('$label: ', style: Theme.of(context).textTheme.labelLarge),
+        Text(value),
+      ],
     );
   }
 }

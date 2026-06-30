@@ -18,6 +18,12 @@ export function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
+export function timingSafeStringEqual(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+}
+
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(24).toString('base64url');
   const derivedKey = (await scrypt(password, salt, keyLength)) as Buffer;

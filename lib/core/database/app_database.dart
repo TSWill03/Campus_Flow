@@ -273,6 +273,8 @@ class StudySessions extends Table {
   DateTimeColumn get updatedAt => dateTime()();
   TextColumn get syncStatus => text()();
   BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+  TextColumn get academicProfileId =>
+      text().nullable().references(AcademicProfiles, #id)();
   TextColumn get studySubjectId =>
       text().nullable().references(StudySubjects, #id)();
   TextColumn get studyTopicId =>
@@ -344,7 +346,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -378,6 +380,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 9) {
         await _migrateFrom8To9(m);
+      }
+      if (from < 10) {
+        await _migrateFrom9To10(m);
       }
       await _createIndexes();
     },
@@ -603,6 +608,15 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<void> _migrateFrom9To10(Migrator m) async {
+    await _addColumnIfMissing(
+      tableName: 'study_sessions',
+      columnName: 'academic_profile_id',
+      statement:
+          'ALTER TABLE study_sessions ADD COLUMN academic_profile_id TEXT NULL',
+    );
+  }
+
   Future<void> _addColumnIfMissing({
     required String tableName,
     required String columnName,
@@ -670,6 +684,18 @@ class AppDatabase extends _$AppDatabase {
             .map((row) => row.id)
             .toSet();
 
+    final studySessionIds =
+        (await (select(
+              studySessions,
+            )..where((table) => table.isDeleted.equals(false))).get())
+            .where(
+              (row) =>
+                  row.academicProfileId != null &&
+                  !activeProfileIds.contains(row.academicProfileId),
+            )
+            .map((row) => row.id)
+            .toSet();
+
     final orphanedLessonIds = orphanedSubjectIds.isEmpty
         ? <String>{}
         : (await (select(courseSubjectLessons)..where(
@@ -702,7 +728,8 @@ class AppDatabase extends _$AppDatabase {
         orphanedAttachmentIds.isEmpty &&
         complementaryIds.isEmpty &&
         internshipIds.isEmpty &&
-        extensionIds.isEmpty) {
+        extensionIds.isEmpty &&
+        studySessionIds.isEmpty) {
       return;
     }
 
@@ -772,6 +799,18 @@ class AppDatabase extends _$AppDatabase {
           extensionActivities,
         )..where((table) => table.id.isIn(extensionIds))).write(
           ExtensionActivitiesCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingDelete.name),
+          ),
+        );
+      }
+
+      if (studySessionIds.isNotEmpty) {
+        await (update(
+          studySessions,
+        )..where((table) => table.id.isIn(studySessionIds))).write(
+          StudySessionsCompanion(
             isDeleted: const Value(true),
             updatedAt: Value(now),
             syncStatus: Value(SyncStatus.pendingDelete.name),
@@ -902,6 +941,9 @@ class AppDatabase extends _$AppDatabase {
     );
     await customStatement(
       'CREATE INDEX IF NOT EXISTS idx_study_sessions_sync_status ON study_sessions(sync_status, is_deleted)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_study_sessions_profile ON study_sessions(academic_profile_id, is_deleted)',
     );
     await customStatement(
       'CREATE INDEX IF NOT EXISTS idx_sync_queue_status ON sync_queue_entries(status, created_at)',

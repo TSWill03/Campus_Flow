@@ -71,6 +71,17 @@ class DriftAcademicProfileRepository implements AcademicProfileRepository {
         .map((row) => row.id)
         .toList(growable: false);
 
+    final studySessionRows =
+        await (_database.select(_database.studySessions)..where(
+              (table) =>
+                  table.academicProfileId.equals(id) &
+                  table.isDeleted.equals(false),
+            ))
+            .get();
+    final studySessionIds = studySessionRows
+        .map((row) => row.id)
+        .toList(growable: false);
+
     final attachmentRows = <AttachmentRow>[
       if (lessonIds.isNotEmpty)
         ...await (_database.select(_database.attachments)..where(
@@ -220,6 +231,18 @@ class DriftAcademicProfileRepository implements AcademicProfileRepository {
         );
       }
 
+      if (studySessionIds.isNotEmpty) {
+        await (_database.update(
+          _database.studySessions,
+        )..where((table) => table.id.isIn(studySessionIds))).write(
+          StudySessionsCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(now),
+            syncStatus: Value(SyncStatus.pendingDelete.name),
+          ),
+        );
+      }
+
       for (final linkedSubject in creditLinkedSubjects.values) {
         await (_database.update(
           _database.courseSubjects,
@@ -275,6 +298,11 @@ class DriftAcademicProfileRepository implements AcademicProfileRepository {
     await _enqueueDeleteForIds(
       entityType: 'extension_activity',
       ids: extensionIds,
+      now: now,
+    );
+    await _enqueueDeleteForIds(
+      entityType: 'study_session',
+      ids: studySessionIds,
       now: now,
     );
     for (final linkedSubject in creditLinkedSubjects.values) {

@@ -32,6 +32,7 @@ void main() {
     });
 
     test('saves study entities and cascades subject deletion', () async {
+      await harness.insertAcademicProfile(id: 'profile-1');
       final subject = _subject();
       final topic = _topic(subject.id);
       final task = _task(subject.id);
@@ -46,6 +47,14 @@ void main() {
       expect(await repository.getAllTopics(), hasLength(1));
       expect(await repository.getAllTasks(), hasLength(1));
       expect(await repository.getAllSessions(), hasLength(1));
+      expect(
+        await repository.getAllSessions(academicProfileId: 'profile-1'),
+        hasLength(1),
+      );
+      expect(
+        await repository.getAllSessions(academicProfileId: 'profile-2'),
+        isEmpty,
+      );
 
       await repository.deleteSubject(subject.id);
       final queueById = {
@@ -116,6 +125,7 @@ StudySession _session(String subjectId, String topicId) {
     updatedAt: now,
     syncStatus: SyncStatus.pendingCreate,
     isDeleted: false,
+    academicProfileId: 'profile-1',
     studySubjectId: subjectId,
     studyTopicId: topicId,
     startedAt: now,

@@ -176,7 +176,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                                   children: [
                                                     Text(
                                                       apiSettings.hasServer
-                                                          ? 'Servidor remoto ativo'
+                                                          ? apiSettings
+                                                                    .isLocalServer
+                                                                ? 'Servidor local ativo'
+                                                                : 'Servidor remoto ativo'
                                                           : 'Modo local/offline ativo',
                                                       style: theme
                                                           .textTheme
@@ -214,6 +217,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                       ),
                                       const SizedBox(height: 20),
                                       SegmentedButton<_LoginMode>(
+                                        showSelectedIcon: false,
                                         segments: const [
                                           ButtonSegment(
                                             value: _LoginMode.signIn,

@@ -27,9 +27,8 @@ class DriftDashboardRepository {
               0 AS completed_complementary_hours,
               0 AS completed_internship_hours,
               0 AS completed_extension_hours,
-              (SELECT COUNT(*) FROM study_sessions WHERE is_deleted = 0) AS total_study_sessions,
-              (SELECT COALESCE(SUM(duration_minutes), 0) FROM study_sessions WHERE is_deleted = 0)
-                AS total_study_minutes,
+              0 AS total_study_sessions,
+              0 AS total_study_minutes,
               0 AS required_complementary_hours,
               0 AS required_internship_hours,
               0 AS required_extension_hours
@@ -65,8 +64,8 @@ class DriftDashboardRepository {
         (SELECT COALESCE(SUM(workload_hours), 0)
           FROM extension_activities
           WHERE is_deleted = 0 AND status = 'approved'$profileFilter) AS completed_extension_hours,
-        (SELECT COUNT(*) FROM study_sessions WHERE is_deleted = 0) AS total_study_sessions,
-        (SELECT COALESCE(SUM(duration_minutes), 0) FROM study_sessions WHERE is_deleted = 0)
+        (SELECT COUNT(*) FROM study_sessions WHERE is_deleted = 0$profileFilter) AS total_study_sessions,
+        (SELECT COALESCE(SUM(duration_minutes), 0) FROM study_sessions WHERE is_deleted = 0$profileFilter)
           AS total_study_minutes,
         $requirementsProjection
     ''';

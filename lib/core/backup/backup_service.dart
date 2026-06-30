@@ -287,6 +287,11 @@ class BackupService {
       academicProfileIds,
       (item) => item.academicProfileId,
     );
+    _validateAcademicProfileLinks(
+      bundle.studySessions,
+      academicProfileIds,
+      (item) => item.academicProfileId,
+    );
     for (final lesson in bundle.courseSubjectLessons) {
       if (!courseSubjectIds.contains(lesson.courseSubjectId)) {
         throw const BackupValidationException(
@@ -678,6 +683,7 @@ class BackupService {
         updatedAt: Value(session.updatedAt),
         syncStatus: Value(session.syncStatus.name),
         isDeleted: Value(session.isDeleted),
+        academicProfileId: Value(session.academicProfileId),
         studySubjectId: Value(session.studySubjectId),
         studyTopicId: Value(session.studyTopicId),
         startedAt: Value(session.startedAt),

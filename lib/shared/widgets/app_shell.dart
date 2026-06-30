@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class AppShell extends StatelessWidget {
-  const AppShell({
-    super.key,
-    required this.child,
-  });
+  const AppShell({super.key, required this.child});
 
   final Widget child;
 
@@ -17,11 +14,7 @@ class AppShell extends StatelessWidget {
       icon: Icons.space_dashboard_rounded,
       path: '/dashboard',
     ),
-    _ShellItem(
-      label: 'Perfil',
-      icon: Icons.school_rounded,
-      path: '/profile',
-    ),
+    _ShellItem(label: 'Perfil', icon: Icons.school_rounded, path: '/profile'),
     _ShellItem(
       label: 'Disciplinas',
       icon: Icons.menu_book_rounded,
@@ -42,11 +35,7 @@ class AppShell extends StatelessWidget {
       icon: Icons.groups_rounded,
       path: '/extensions',
     ),
-    _ShellItem(
-      label: 'Estudos',
-      icon: Icons.timer_rounded,
-      path: '/study',
-    ),
+    _ShellItem(label: 'Estudos', icon: Icons.timer_rounded, path: '/study'),
     _ShellItem(
       label: 'Ajustes',
       icon: Icons.settings_rounded,
@@ -70,7 +59,30 @@ class AppShell extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(title),
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(title),
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.tertiaryContainer,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    'Beta',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onTertiaryContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
             centerTitle: false,
             elevation: 0,
           ),
@@ -83,10 +95,12 @@ class AppShell extends StatelessWidget {
                 colors: [
                   theme.colorScheme.surface,
                   theme.brightness == Brightness.dark
-                      ? theme.colorScheme.surfaceContainerHighest
-                          .withValues(alpha: 0.55)
-                      : theme.colorScheme.primaryContainer
-                          .withValues(alpha: 0.35),
+                      ? theme.colorScheme.surfaceContainerHighest.withValues(
+                          alpha: 0.55,
+                        )
+                      : theme.colorScheme.primaryContainer.withValues(
+                          alpha: 0.35,
+                        ),
                 ],
               ),
             ),
@@ -94,10 +108,7 @@ class AppShell extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (isWide)
-                  SizedBox(
-                    width: 280,
-                    child: SafeArea(child: navigation),
-                  ),
+                  SizedBox(width: 280, child: SafeArea(child: navigation)),
                 Expanded(
                   child: Align(
                     alignment: Alignment.topCenter,
@@ -119,6 +130,9 @@ class AppShell extends StatelessWidget {
   }
 
   String _titleFor(String location) {
+    if (location == '/feedback') {
+      return 'Feedback';
+    }
     for (final item in _items) {
       if (location == item.path || location.startsWith('${item.path}/')) {
         return item.label;
@@ -129,10 +143,7 @@ class AppShell extends StatelessWidget {
 }
 
 class _NavigationPanel extends StatelessWidget {
-  const _NavigationPanel({
-    required this.currentLocation,
-    required this.items,
-  });
+  const _NavigationPanel({required this.currentLocation, required this.items});
 
   final String currentLocation;
   final List<_ShellItem> items;
@@ -171,6 +182,24 @@ class _NavigationPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    'Beta publica',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Text(
                   'Sua graduacao, horas e estudos em um unico fluxo offline-first.',
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -187,13 +216,15 @@ class _NavigationPanel extends StatelessWidget {
               separatorBuilder: (_, index) => const SizedBox(height: 6),
               itemBuilder: (context, index) {
                 final item = items[index];
-                final selected = currentLocation == item.path ||
+                final selected =
+                    currentLocation == item.path ||
                     currentLocation.startsWith('${item.path}/');
 
                 return ListTile(
                   selected: selected,
-                  selectedTileColor:
-                      theme.colorScheme.primary.withValues(alpha: 0.08),
+                  selectedTileColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.08,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),

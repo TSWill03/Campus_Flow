@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/entity_helpers.dart';
 import '../../../../core/utils/id_generator.dart';
 import '../../../../shared/widgets/form_submission_state.dart';
+import '../../../academic_profile/presentation/providers/academic_profile_provider.dart';
 import '../../domain/entities/study_session.dart';
 import 'study_manager_provider.dart';
 
-class StudySessionFormController extends AutoDisposeNotifier<FormSubmissionState> {
+class StudySessionFormController
+    extends AutoDisposeNotifier<FormSubmissionState> {
   @override
   FormSubmissionState build() => const FormSubmissionState.idle();
 
@@ -24,6 +26,14 @@ class StudySessionFormController extends AutoDisposeNotifier<FormSubmissionState
     state = const FormSubmissionState.loading();
 
     try {
+      final activeProfileId = ref
+          .read(activeAcademicProfileProvider)
+          .valueOrNull
+          ?.id;
+      final academicProfileId = current?.academicProfileId ?? activeProfileId;
+      if (academicProfileId == null || academicProfileId.isEmpty) {
+        throw StateError('Crie ou ative um perfil antes de registrar sessoes.');
+      }
       final now = DateTime.now();
       final session = StudySession(
         id: current?.id ?? IdGenerator.generate(),
@@ -32,6 +42,7 @@ class StudySessionFormController extends AutoDisposeNotifier<FormSubmissionState
         updatedAt: now,
         syncStatus: resolveUpsertSyncStatus(current?.syncStatus),
         isDeleted: false,
+        academicProfileId: academicProfileId,
         studySubjectId: studySubjectId,
         studyTopicId: studyTopicId,
         startedAt: startedAt,
@@ -44,13 +55,16 @@ class StudySessionFormController extends AutoDisposeNotifier<FormSubmissionState
       state = const FormSubmissionState.success('Sessao salva com sucesso.');
       return true;
     } catch (error) {
-      state = FormSubmissionState.error('Nao foi possivel salvar a sessao: $error');
+      state = FormSubmissionState.error(
+        'Nao foi possivel salvar a sessao: $error',
+      );
       return false;
     }
   }
 }
 
 final studySessionFormControllerProvider =
-    NotifierProvider.autoDispose<StudySessionFormController, FormSubmissionState>(
-  StudySessionFormController.new,
-);
+    NotifierProvider.autoDispose<
+      StudySessionFormController,
+      FormSubmissionState
+    >(StudySessionFormController.new);

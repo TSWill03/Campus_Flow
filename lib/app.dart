@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/feedback/error_report_providers.dart';
+import 'core/network/api_settings.dart';
 import 'core/router/app_router.dart';
 import 'core/sync/remote_sync_service.dart';
 import 'core/theme/app_theme.dart';
@@ -12,6 +14,7 @@ import 'core/theme/theme_mode_controller.dart';
 import 'features/auth/presentation/providers/auth_providers.dart';
 
 final _autoSyncStartedProvider = StateProvider<bool>((ref) => false);
+final _errorReportFlushStartedProvider = StateProvider<bool>((ref) => false);
 
 /// Widget raiz do CampusFlow.
 ///
@@ -26,7 +29,9 @@ class CampusFlowApp extends ConsumerWidget {
     final themePreference = ref.watch(themeModeControllerProvider);
     final colorProfile = ref.watch(colorProfileControllerProvider);
     final authState = ref.watch(authControllerProvider);
+    final apiSettings = ref.watch(apiSettingsControllerProvider);
     final autoSyncStarted = ref.watch(_autoSyncStartedProvider);
+    final errorReportFlushStarted = ref.watch(_errorReportFlushStartedProvider);
 
     // A sincronizacao e disparada fora do build com microtask para manter a UI
     // responsiva. Se a internet ou o servidor falhar, o app continua offline e
@@ -43,6 +48,18 @@ class CampusFlowApp extends ConsumerWidget {
     } else if (!authState.isAuthenticated && autoSyncStarted) {
       Future<void>.microtask(() {
         ref.read(_autoSyncStartedProvider.notifier).state = false;
+      });
+    }
+
+    if (apiSettings.hasServer && !errorReportFlushStarted) {
+      Future<void>.microtask(() async {
+        ref.read(_errorReportFlushStartedProvider.notifier).state = true;
+        await ref.read(errorReportServiceProvider).flushQueuedReports();
+        ref.invalidate(queuedErrorReportCountProvider);
+      });
+    } else if (!apiSettings.hasServer && errorReportFlushStarted) {
+      Future<void>.microtask(() {
+        ref.read(_errorReportFlushStartedProvider.notifier).state = false;
       });
     }
 

@@ -8691,6 +8691,21 @@ class $StudySessionsTable extends StudySessions
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _academicProfileIdMeta = const VerificationMeta(
+    'academicProfileId',
+  );
+  @override
+  late final GeneratedColumn<String> academicProfileId =
+      GeneratedColumn<String>(
+        'academic_profile_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES academic_profiles (id)',
+        ),
+      );
   static const VerificationMeta _studySubjectIdMeta = const VerificationMeta(
     'studySubjectId',
   );
@@ -8769,6 +8784,7 @@ class $StudySessionsTable extends StudySessions
     updatedAt,
     syncStatus,
     isDeleted,
+    academicProfileId,
     studySubjectId,
     studyTopicId,
     startedAt,
@@ -8827,6 +8843,15 @@ class $StudySessionsTable extends StudySessions
       context.handle(
         _isDeletedMeta,
         isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
+    }
+    if (data.containsKey('academic_profile_id')) {
+      context.handle(
+        _academicProfileIdMeta,
+        academicProfileId.isAcceptableOrUnknown(
+          data['academic_profile_id']!,
+          _academicProfileIdMeta,
+        ),
       );
     }
     if (data.containsKey('study_subject_id')) {
@@ -8913,6 +8938,10 @@ class $StudySessionsTable extends StudySessions
         DriftSqlType.bool,
         data['${effectivePrefix}is_deleted'],
       )!,
+      academicProfileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}academic_profile_id'],
+      ),
       studySubjectId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}study_subject_id'],
@@ -8953,6 +8982,7 @@ class StudySessionRow extends DataClass implements Insertable<StudySessionRow> {
   final DateTime updatedAt;
   final String syncStatus;
   final bool isDeleted;
+  final String? academicProfileId;
   final String? studySubjectId;
   final String? studyTopicId;
   final DateTime startedAt;
@@ -8966,6 +8996,7 @@ class StudySessionRow extends DataClass implements Insertable<StudySessionRow> {
     required this.updatedAt,
     required this.syncStatus,
     required this.isDeleted,
+    this.academicProfileId,
     this.studySubjectId,
     this.studyTopicId,
     required this.startedAt,
@@ -8984,6 +9015,9 @@ class StudySessionRow extends DataClass implements Insertable<StudySessionRow> {
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['sync_status'] = Variable<String>(syncStatus);
     map['is_deleted'] = Variable<bool>(isDeleted);
+    if (!nullToAbsent || academicProfileId != null) {
+      map['academic_profile_id'] = Variable<String>(academicProfileId);
+    }
     if (!nullToAbsent || studySubjectId != null) {
       map['study_subject_id'] = Variable<String>(studySubjectId);
     }
@@ -9009,6 +9043,9 @@ class StudySessionRow extends DataClass implements Insertable<StudySessionRow> {
       updatedAt: Value(updatedAt),
       syncStatus: Value(syncStatus),
       isDeleted: Value(isDeleted),
+      academicProfileId: academicProfileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(academicProfileId),
       studySubjectId: studySubjectId == null && nullToAbsent
           ? const Value.absent()
           : Value(studySubjectId),
@@ -9036,6 +9073,9 @@ class StudySessionRow extends DataClass implements Insertable<StudySessionRow> {
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       syncStatus: serializer.fromJson<String>(json['syncStatus']),
       isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      academicProfileId: serializer.fromJson<String?>(
+        json['academicProfileId'],
+      ),
       studySubjectId: serializer.fromJson<String?>(json['studySubjectId']),
       studyTopicId: serializer.fromJson<String?>(json['studyTopicId']),
       startedAt: serializer.fromJson<DateTime>(json['startedAt']),
@@ -9054,6 +9094,7 @@ class StudySessionRow extends DataClass implements Insertable<StudySessionRow> {
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'syncStatus': serializer.toJson<String>(syncStatus),
       'isDeleted': serializer.toJson<bool>(isDeleted),
+      'academicProfileId': serializer.toJson<String?>(academicProfileId),
       'studySubjectId': serializer.toJson<String?>(studySubjectId),
       'studyTopicId': serializer.toJson<String?>(studyTopicId),
       'startedAt': serializer.toJson<DateTime>(startedAt),
@@ -9070,6 +9111,7 @@ class StudySessionRow extends DataClass implements Insertable<StudySessionRow> {
     DateTime? updatedAt,
     String? syncStatus,
     bool? isDeleted,
+    Value<String?> academicProfileId = const Value.absent(),
     Value<String?> studySubjectId = const Value.absent(),
     Value<String?> studyTopicId = const Value.absent(),
     DateTime? startedAt,
@@ -9083,6 +9125,9 @@ class StudySessionRow extends DataClass implements Insertable<StudySessionRow> {
     updatedAt: updatedAt ?? this.updatedAt,
     syncStatus: syncStatus ?? this.syncStatus,
     isDeleted: isDeleted ?? this.isDeleted,
+    academicProfileId: academicProfileId.present
+        ? academicProfileId.value
+        : this.academicProfileId,
     studySubjectId: studySubjectId.present
         ? studySubjectId.value
         : this.studySubjectId,
@@ -9102,6 +9147,9 @@ class StudySessionRow extends DataClass implements Insertable<StudySessionRow> {
           ? data.syncStatus.value
           : this.syncStatus,
       isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      academicProfileId: data.academicProfileId.present
+          ? data.academicProfileId.value
+          : this.academicProfileId,
       studySubjectId: data.studySubjectId.present
           ? data.studySubjectId.value
           : this.studySubjectId,
@@ -9126,6 +9174,7 @@ class StudySessionRow extends DataClass implements Insertable<StudySessionRow> {
           ..write('updatedAt: $updatedAt, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('isDeleted: $isDeleted, ')
+          ..write('academicProfileId: $academicProfileId, ')
           ..write('studySubjectId: $studySubjectId, ')
           ..write('studyTopicId: $studyTopicId, ')
           ..write('startedAt: $startedAt, ')
@@ -9144,6 +9193,7 @@ class StudySessionRow extends DataClass implements Insertable<StudySessionRow> {
     updatedAt,
     syncStatus,
     isDeleted,
+    academicProfileId,
     studySubjectId,
     studyTopicId,
     startedAt,
@@ -9161,6 +9211,7 @@ class StudySessionRow extends DataClass implements Insertable<StudySessionRow> {
           other.updatedAt == this.updatedAt &&
           other.syncStatus == this.syncStatus &&
           other.isDeleted == this.isDeleted &&
+          other.academicProfileId == this.academicProfileId &&
           other.studySubjectId == this.studySubjectId &&
           other.studyTopicId == this.studyTopicId &&
           other.startedAt == this.startedAt &&
@@ -9176,6 +9227,7 @@ class StudySessionsCompanion extends UpdateCompanion<StudySessionRow> {
   final Value<DateTime> updatedAt;
   final Value<String> syncStatus;
   final Value<bool> isDeleted;
+  final Value<String?> academicProfileId;
   final Value<String?> studySubjectId;
   final Value<String?> studyTopicId;
   final Value<DateTime> startedAt;
@@ -9190,6 +9242,7 @@ class StudySessionsCompanion extends UpdateCompanion<StudySessionRow> {
     this.updatedAt = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.isDeleted = const Value.absent(),
+    this.academicProfileId = const Value.absent(),
     this.studySubjectId = const Value.absent(),
     this.studyTopicId = const Value.absent(),
     this.startedAt = const Value.absent(),
@@ -9205,6 +9258,7 @@ class StudySessionsCompanion extends UpdateCompanion<StudySessionRow> {
     required DateTime updatedAt,
     required String syncStatus,
     this.isDeleted = const Value.absent(),
+    this.academicProfileId = const Value.absent(),
     this.studySubjectId = const Value.absent(),
     this.studyTopicId = const Value.absent(),
     required DateTime startedAt,
@@ -9226,6 +9280,7 @@ class StudySessionsCompanion extends UpdateCompanion<StudySessionRow> {
     Expression<DateTime>? updatedAt,
     Expression<String>? syncStatus,
     Expression<bool>? isDeleted,
+    Expression<String>? academicProfileId,
     Expression<String>? studySubjectId,
     Expression<String>? studyTopicId,
     Expression<DateTime>? startedAt,
@@ -9241,6 +9296,7 @@ class StudySessionsCompanion extends UpdateCompanion<StudySessionRow> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (isDeleted != null) 'is_deleted': isDeleted,
+      if (academicProfileId != null) 'academic_profile_id': academicProfileId,
       if (studySubjectId != null) 'study_subject_id': studySubjectId,
       if (studyTopicId != null) 'study_topic_id': studyTopicId,
       if (startedAt != null) 'started_at': startedAt,
@@ -9258,6 +9314,7 @@ class StudySessionsCompanion extends UpdateCompanion<StudySessionRow> {
     Value<DateTime>? updatedAt,
     Value<String>? syncStatus,
     Value<bool>? isDeleted,
+    Value<String?>? academicProfileId,
     Value<String?>? studySubjectId,
     Value<String?>? studyTopicId,
     Value<DateTime>? startedAt,
@@ -9273,6 +9330,7 @@ class StudySessionsCompanion extends UpdateCompanion<StudySessionRow> {
       updatedAt: updatedAt ?? this.updatedAt,
       syncStatus: syncStatus ?? this.syncStatus,
       isDeleted: isDeleted ?? this.isDeleted,
+      academicProfileId: academicProfileId ?? this.academicProfileId,
       studySubjectId: studySubjectId ?? this.studySubjectId,
       studyTopicId: studyTopicId ?? this.studyTopicId,
       startedAt: startedAt ?? this.startedAt,
@@ -9303,6 +9361,9 @@ class StudySessionsCompanion extends UpdateCompanion<StudySessionRow> {
     }
     if (isDeleted.present) {
       map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
+    if (academicProfileId.present) {
+      map['academic_profile_id'] = Variable<String>(academicProfileId.value);
     }
     if (studySubjectId.present) {
       map['study_subject_id'] = Variable<String>(studySubjectId.value);
@@ -9337,6 +9398,7 @@ class StudySessionsCompanion extends UpdateCompanion<StudySessionRow> {
           ..write('updatedAt: $updatedAt, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('isDeleted: $isDeleted, ')
+          ..write('academicProfileId: $academicProfileId, ')
           ..write('studySubjectId: $studySubjectId, ')
           ..write('studyTopicId: $studyTopicId, ')
           ..write('startedAt: $startedAt, ')
@@ -10329,6 +10391,27 @@ final class $$AcademicProfilesTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$StudySessionsTable, List<StudySessionRow>>
+  _studySessionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.studySessions,
+    aliasName: $_aliasNameGenerator(
+      db.academicProfiles.id,
+      db.studySessions.academicProfileId,
+    ),
+  );
+
+  $$StudySessionsTableProcessedTableManager get studySessionsRefs {
+    final manager = $$StudySessionsTableTableManager($_db, $_db.studySessions)
+        .filter(
+          (f) => f.academicProfileId.id.sqlEquals($_itemColumn<String>('id')!),
+        );
+
+    final cache = $_typedResult.readTableOrNull(_studySessionsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$AcademicProfilesTableFilterComposer
@@ -10522,6 +10605,31 @@ class $$AcademicProfilesTableFilterComposer
           }) => $$ExtensionActivitiesTableFilterComposer(
             $db: $db,
             $table: $db.extensionActivities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> studySessionsRefs(
+    Expression<bool> Function($$StudySessionsTableFilterComposer f) f,
+  ) {
+    final $$StudySessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.studySessions,
+      getReferencedColumn: (t) => t.academicProfileId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$StudySessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.studySessions,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -10819,6 +10927,31 @@ class $$AcademicProfilesTableAnnotationComposer
         );
     return f(composer);
   }
+
+  Expression<T> studySessionsRefs<T extends Object>(
+    Expression<T> Function($$StudySessionsTableAnnotationComposer a) f,
+  ) {
+    final $$StudySessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.studySessions,
+      getReferencedColumn: (t) => t.academicProfileId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$StudySessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.studySessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$AcademicProfilesTableTableManager
@@ -10839,6 +10972,7 @@ class $$AcademicProfilesTableTableManager
             bool complementaryActivitiesRefs,
             bool internshipsRefs,
             bool extensionActivitiesRefs,
+            bool studySessionsRefs,
           })
         > {
   $$AcademicProfilesTableTableManager(
@@ -10952,6 +11086,7 @@ class $$AcademicProfilesTableTableManager
                 complementaryActivitiesRefs = false,
                 internshipsRefs = false,
                 extensionActivitiesRefs = false,
+                studySessionsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -10960,6 +11095,7 @@ class $$AcademicProfilesTableTableManager
                     if (complementaryActivitiesRefs) db.complementaryActivities,
                     if (internshipsRefs) db.internships,
                     if (extensionActivitiesRefs) db.extensionActivities,
+                    if (studySessionsRefs) db.studySessions,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -11048,6 +11184,27 @@ class $$AcademicProfilesTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (studySessionsRefs)
+                        await $_getPrefetchedData<
+                          AcademicProfileRow,
+                          $AcademicProfilesTable,
+                          StudySessionRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AcademicProfilesTableReferences
+                              ._studySessionsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AcademicProfilesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).studySessionsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.academicProfileId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -11073,6 +11230,7 @@ typedef $$AcademicProfilesTableProcessedTableManager =
         bool complementaryActivitiesRefs,
         bool internshipsRefs,
         bool extensionActivitiesRefs,
+        bool studySessionsRefs,
       })
     >;
 typedef $$CourseSubjectsTableCreateCompanionBuilder =
@@ -15956,6 +16114,7 @@ typedef $$StudySessionsTableCreateCompanionBuilder =
       required DateTime updatedAt,
       required String syncStatus,
       Value<bool> isDeleted,
+      Value<String?> academicProfileId,
       Value<String?> studySubjectId,
       Value<String?> studyTopicId,
       required DateTime startedAt,
@@ -15972,6 +16131,7 @@ typedef $$StudySessionsTableUpdateCompanionBuilder =
       Value<DateTime> updatedAt,
       Value<String> syncStatus,
       Value<bool> isDeleted,
+      Value<String?> academicProfileId,
       Value<String?> studySubjectId,
       Value<String?> studyTopicId,
       Value<DateTime> startedAt,
@@ -15989,6 +16149,28 @@ final class $$StudySessionsTableReferences
     super.$_table,
     super.$_typedResult,
   );
+
+  static $AcademicProfilesTable _academicProfileIdTable(_$AppDatabase db) =>
+      db.academicProfiles.createAlias(
+        $_aliasNameGenerator(
+          db.studySessions.academicProfileId,
+          db.academicProfiles.id,
+        ),
+      );
+
+  $$AcademicProfilesTableProcessedTableManager? get academicProfileId {
+    final $_column = $_itemColumn<String>('academic_profile_id');
+    if ($_column == null) return null;
+    final manager = $$AcademicProfilesTableTableManager(
+      $_db,
+      $_db.academicProfiles,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_academicProfileIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
 
   static $StudySubjectsTable _studySubjectIdTable(_$AppDatabase db) =>
       db.studySubjects.createAlias(
@@ -16090,6 +16272,29 @@ class $$StudySessionsTableFilterComposer
     column: $table.notes,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$AcademicProfilesTableFilterComposer get academicProfileId {
+    final $$AcademicProfilesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.academicProfileId,
+      referencedTable: $db.academicProfiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AcademicProfilesTableFilterComposer(
+            $db: $db,
+            $table: $db.academicProfiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 
   $$StudySubjectsTableFilterComposer get studySubjectId {
     final $$StudySubjectsTableFilterComposer composer = $composerBuilder(
@@ -16197,6 +16402,29 @@ class $$StudySessionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  $$AcademicProfilesTableOrderingComposer get academicProfileId {
+    final $$AcademicProfilesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.academicProfileId,
+      referencedTable: $db.academicProfiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AcademicProfilesTableOrderingComposer(
+            $db: $db,
+            $table: $db.academicProfiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
   $$StudySubjectsTableOrderingComposer get studySubjectId {
     final $$StudySubjectsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -16287,6 +16515,29 @@ class $$StudySessionsTableAnnotationComposer
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
+  $$AcademicProfilesTableAnnotationComposer get academicProfileId {
+    final $$AcademicProfilesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.academicProfileId,
+      referencedTable: $db.academicProfiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AcademicProfilesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.academicProfiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
   $$StudySubjectsTableAnnotationComposer get studySubjectId {
     final $$StudySubjectsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -16347,7 +16598,11 @@ class $$StudySessionsTableTableManager
           $$StudySessionsTableUpdateCompanionBuilder,
           (StudySessionRow, $$StudySessionsTableReferences),
           StudySessionRow,
-          PrefetchHooks Function({bool studySubjectId, bool studyTopicId})
+          PrefetchHooks Function({
+            bool academicProfileId,
+            bool studySubjectId,
+            bool studyTopicId,
+          })
         > {
   $$StudySessionsTableTableManager(_$AppDatabase db, $StudySessionsTable table)
     : super(
@@ -16368,6 +16623,7 @@ class $$StudySessionsTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<String> syncStatus = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
+                Value<String?> academicProfileId = const Value.absent(),
                 Value<String?> studySubjectId = const Value.absent(),
                 Value<String?> studyTopicId = const Value.absent(),
                 Value<DateTime> startedAt = const Value.absent(),
@@ -16382,6 +16638,7 @@ class $$StudySessionsTableTableManager
                 updatedAt: updatedAt,
                 syncStatus: syncStatus,
                 isDeleted: isDeleted,
+                academicProfileId: academicProfileId,
                 studySubjectId: studySubjectId,
                 studyTopicId: studyTopicId,
                 startedAt: startedAt,
@@ -16398,6 +16655,7 @@ class $$StudySessionsTableTableManager
                 required DateTime updatedAt,
                 required String syncStatus,
                 Value<bool> isDeleted = const Value.absent(),
+                Value<String?> academicProfileId = const Value.absent(),
                 Value<String?> studySubjectId = const Value.absent(),
                 Value<String?> studyTopicId = const Value.absent(),
                 required DateTime startedAt,
@@ -16412,6 +16670,7 @@ class $$StudySessionsTableTableManager
                 updatedAt: updatedAt,
                 syncStatus: syncStatus,
                 isDeleted: isDeleted,
+                academicProfileId: academicProfileId,
                 studySubjectId: studySubjectId,
                 studyTopicId: studyTopicId,
                 startedAt: startedAt,
@@ -16429,7 +16688,11 @@ class $$StudySessionsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({studySubjectId = false, studyTopicId = false}) {
+              ({
+                academicProfileId = false,
+                studySubjectId = false,
+                studyTopicId = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [],
@@ -16449,6 +16712,21 @@ class $$StudySessionsTableTableManager
                           dynamic
                         >
                       >(state) {
+                        if (academicProfileId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.academicProfileId,
+                                    referencedTable:
+                                        $$StudySessionsTableReferences
+                                            ._academicProfileIdTable(db),
+                                    referencedColumn:
+                                        $$StudySessionsTableReferences
+                                            ._academicProfileIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
                         if (studySubjectId) {
                           state =
                               state.withJoin(
@@ -16503,7 +16781,11 @@ typedef $$StudySessionsTableProcessedTableManager =
       $$StudySessionsTableUpdateCompanionBuilder,
       (StudySessionRow, $$StudySessionsTableReferences),
       StudySessionRow,
-      PrefetchHooks Function({bool studySubjectId, bool studyTopicId})
+      PrefetchHooks Function({
+        bool academicProfileId,
+        bool studySubjectId,
+        bool studyTopicId,
+      })
     >;
 typedef $$SyncQueueEntriesTableCreateCompanionBuilder =
     SyncQueueEntriesCompanion Function({

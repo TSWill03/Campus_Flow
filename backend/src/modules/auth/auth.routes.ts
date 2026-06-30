@@ -22,15 +22,37 @@ import {
 } from './auth.schemas.js';
 
 export async function registerAuthRoutes(app: FastifyInstance) {
-  app.post('/auth/register', async (request) => {
+  app.post(
+    '/auth/register',
+    {
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: '1 minute'
+        }
+      }
+    },
+    async (request) => {
     const body = registerSchema.parse(request.body);
     return registerWithPassword(app, body);
-  });
+    }
+  );
 
-  app.post('/auth/login', async (request) => {
+  app.post(
+    '/auth/login',
+    {
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: '1 minute'
+        }
+      }
+    },
+    async (request) => {
     const body = loginSchema.parse(request.body);
     return loginWithPassword(app, body);
-  });
+    }
+  );
 
   app.post('/auth/google', async (request) => {
     const body = googleLoginSchema.parse(request.body);
@@ -50,10 +72,21 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     };
   });
 
-  app.post('/auth/password/forgot', async (request) => {
+  app.post(
+    '/auth/password/forgot',
+    {
+      config: {
+        rateLimit: {
+          max: 5,
+          timeWindow: '1 minute'
+        }
+      }
+    },
+    async (request) => {
     const body = forgotPasswordSchema.parse(request.body);
     return createPasswordReset(app, body.email);
-  });
+    }
+  );
 
   app.post('/auth/password/reset', async (request) => {
     const body = resetPasswordSchema.parse(request.body);

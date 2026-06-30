@@ -13,7 +13,8 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default('*'),
   GOOGLE_CLIENT_ID: z.string().optional().default(''),
   GOOGLE_CLIENT_IDS: z.string().optional().default(''),
-  STORAGE_DIR: z.string().default('storage/uploads')
+  STORAGE_DIR: z.string().default('storage/uploads'),
+  ADMIN_API_TOKEN: z.string().optional().default('')
 });
 
 export type AppConfig = z.infer<typeof envSchema> & {
@@ -25,6 +26,9 @@ export function loadConfig(): AppConfig {
   const parsed = envSchema.parse(process.env);
   if (parsed.NODE_ENV === 'production' && parsed.CORS_ORIGIN.trim() === '*') {
     throw new Error('CORS_ORIGIN must not be "*" in production.');
+  }
+  if (parsed.NODE_ENV === 'production' && parsed.JWT_SECRET.includes('CHANGE_ME')) {
+    throw new Error('JWT_SECRET must be a strong production secret.');
   }
 
   return {

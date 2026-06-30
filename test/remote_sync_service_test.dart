@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
+import 'package:campus_flow/core/feedback/error_report_service.dart';
 import 'package:campus_flow/core/network/api_client.dart';
 import 'package:campus_flow/core/network/api_session_store.dart';
 import 'package:campus_flow/core/network/api_settings.dart';
@@ -92,6 +93,14 @@ void main() {
         apiClient: apiClient,
         settings: const ApiSettings(baseUrl: 'https://example.com/api'),
         sharedPreferences: harness.preferences,
+        errorReportService: ErrorReportService(
+          sharedPreferences: harness.preferences,
+          sessionStore: sessionStore,
+          httpClient: MockClient(
+            (_) async =>
+                http.Response(jsonEncode({'reportId': 'report-1'}), 200),
+          ),
+        ),
       );
 
       final result = await service.syncNow();

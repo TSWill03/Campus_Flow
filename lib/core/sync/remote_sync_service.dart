@@ -1,5 +1,6 @@
 // Signature: dev.tswicolly03
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
@@ -9,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../database/app_database.dart';
 import '../database/database_providers.dart';
+import '../feedback/error_report_providers.dart';
+import '../feedback/error_report_service.dart';
 import '../network/api_client.dart';
 import '../network/api_settings.dart';
 
@@ -34,10 +37,12 @@ class RemoteSyncService {
     required ApiClient apiClient,
     required ApiSettings settings,
     required SharedPreferences sharedPreferences,
+    required ErrorReportService errorReportService,
   }) : _database = database,
        _apiClient = apiClient,
        _settings = settings,
-       _sharedPreferences = sharedPreferences;
+       _sharedPreferences = sharedPreferences,
+       _errorReportService = errorReportService;
 
   static const _pullCursorKey = 'remote_sync_pull_cursor';
 
@@ -45,6 +50,7 @@ class RemoteSyncService {
   final ApiClient _apiClient;
   final ApiSettings _settings;
   final SharedPreferences _sharedPreferences;
+  final ErrorReportService _errorReportService;
 
   Future<RemoteSyncRunResult> syncNow() async {
     // O app continua offline-first: se nao houver endpoint configurado, a sync
@@ -105,9 +111,10 @@ class RemoteSyncService {
             await _markFailed(entityType, localId);
           }
         }
-      } catch (_) {
+      } catch (error) {
         failed += pending.length;
         await _markFailedEntries(pending);
+        _reportSyncFailure(error, pending.length);
       }
     }
 
@@ -238,6 +245,25 @@ class RemoteSyncService {
       _ => null,
     };
   }
+
+  void _reportSyncFailure(Object error, int pendingCount) {
+    unawaited(
+      _errorReportService
+          .submitReport(
+            ErrorReportPayload(
+              type: ErrorReportType.syncError,
+              severity: ErrorReportSeverity.medium,
+              message: 'Falha ao enviar fila de sincronizacao.',
+              route: '/settings',
+              extra: {
+                'pendingCount': pendingCount,
+                'errorType': error.runtimeType.toString(),
+              },
+            ),
+          )
+          .catchError((_) => const ErrorReportSendResult(queued: true)),
+    );
+  }
 }
 
 final remoteSyncServiceProvider = Provider<RemoteSyncService>((ref) {
@@ -246,5 +272,6 @@ final remoteSyncServiceProvider = Provider<RemoteSyncService>((ref) {
     apiClient: ref.watch(apiClientProvider),
     settings: ref.watch(apiSettingsControllerProvider),
     sharedPreferences: ref.watch(sharedPreferencesProvider),
+    errorReportService: ref.watch(errorReportServiceProvider),
   );
 });

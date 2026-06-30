@@ -1,8 +1,12 @@
 // Signature: dev.tswicolly03
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/error/app_exception.dart';
+import '../../../../core/feedback/error_report_providers.dart';
+import '../../../../core/feedback/error_report_service.dart';
 import '../../../../shared/widgets/form_submission_state.dart';
 import '../../domain/entities/auth_action_result.dart';
 import '../../domain/entities/google_auth_identity.dart';
@@ -30,6 +34,7 @@ class LoginFormController extends AutoDisposeNotifier<FormSubmissionState> {
       state = FormSubmissionState.success(result.message);
       return result;
     } catch (error) {
+      _reportAuthFailure('password_login', error);
       state = FormSubmissionState.error(
         error is AppException
             ? error.message
@@ -58,6 +63,7 @@ class LoginFormController extends AutoDisposeNotifier<FormSubmissionState> {
       state = FormSubmissionState.success(result.message);
       return result;
     } catch (error) {
+      _reportAuthFailure('password_register', error);
       state = FormSubmissionState.error(
         error is AppException
             ? error.message
@@ -76,6 +82,7 @@ class LoginFormController extends AutoDisposeNotifier<FormSubmissionState> {
       state = FormSubmissionState.success(result.message);
       return result;
     } catch (error) {
+      _reportAuthFailure('google_login', error);
       state = FormSubmissionState.error(
         error is AppException
             ? error.message
@@ -98,6 +105,7 @@ class LoginFormController extends AutoDisposeNotifier<FormSubmissionState> {
       state = FormSubmissionState.success(result.message);
       return result;
     } catch (error) {
+      _reportAuthFailure('google_identity_login', error);
       state = FormSubmissionState.error(
         error is AppException
             ? error.message
@@ -105,6 +113,25 @@ class LoginFormController extends AutoDisposeNotifier<FormSubmissionState> {
       );
       return null;
     }
+  }
+
+  void _reportAuthFailure(String method, Object error) {
+    unawaited(
+      ref
+          .read(errorReportServiceProvider)
+          .submitReport(
+            ErrorReportPayload(
+              type: ErrorReportType.loginError,
+              severity: ErrorReportSeverity.low,
+              message: error is AppException
+                  ? error.message
+                  : 'Falha tecnica de autenticacao.',
+              route: '/login',
+              extra: {'method': method},
+            ),
+          )
+          .catchError((_) => const ErrorReportSendResult(queued: true)),
+    );
   }
 }
 

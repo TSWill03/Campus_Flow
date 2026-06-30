@@ -274,11 +274,30 @@ npm run dev
 
 Mais detalhes estao em `backend/README.md`.
 
+## Beta publica
+
+A base agora tem uma trilha especifica para beta publica em
+`docs/BETA_PUBLICA.md`. Ela cobre objetivo, funcionalidades liberadas,
+limitacoes, variaveis de ambiente, checklist de publicacao, rollback, backups e
+consulta de relatorios de erro.
+
+O app continua offline-first: se o endpoint da API estiver vazio, login e uso
+local seguem funcionando. Quando o endpoint estiver configurado, a beta usa
+autenticacao remota, sync inicial, healthchecks, captura global de erros e a
+tela `Ajustes > Reportar erro ou feedback`.
+
+O plano tecnico para terminar a aplicacao de `/sync/pull`, resolucao de
+conflitos e deduplicacao esta em `docs/SYNC_BETA_PLAN.md`.
+
 ### Conectar o app ao servidor
 
-O app usa o backend automaticamente quando `CAMPUSFLOW_API_BASE_URL` esta definido no codigo/build.
+O app usa o backend local por padrao:
 
-Para usar seu servidor de Vinhedo, a URL padrao configurada no codigo e:
+```text
+http://localhost:3333
+```
+
+Para usar seu servidor de Vinhedo, defina o endpoint no build ou em `Ajustes > Servidor e sincronizacao`:
 
 ```text
 https://tswicolly03.duckdns.org/api

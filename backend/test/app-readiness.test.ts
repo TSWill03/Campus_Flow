@@ -20,6 +20,28 @@ afterEach(async () => {
 });
 
 describe('app health and readiness', () => {
+  it('returns helpful API metadata at the root route', async () => {
+    const app = await buildApp(await testConfig(), {
+      prisma: fakePrisma() as never
+    });
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/'
+    });
+    await app.close();
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      status: 'ok',
+      service: 'campus-flow-backend',
+      endpoints: {
+        health: '/health',
+        ready: '/ready'
+      }
+    });
+  });
+
   it('keeps /health as a process liveness check', async () => {
     const app = await buildApp(await testConfig(), {
       prisma: fakePrisma() as never
@@ -76,9 +98,33 @@ describe('app health and readiness', () => {
     await app.close();
 
     expect(response.statusCode).toBe(500);
-    expect(response.json()).toEqual({
+    expect(response.json()).toMatchObject({
+      requestId: expect.any(String),
       error: 'internal_error',
       message: 'Erro interno do servidor.'
+    });
+  });
+
+  it('keeps malformed JSON as a client error instead of a 500', async () => {
+    const app = await buildApp(await testConfig(), {
+      prisma: fakePrisma() as never
+    });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      headers: {
+        'content-type': 'application/json'
+      },
+      payload: '{"email":'
+    });
+    await app.close();
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({
+      requestId: expect.any(String),
+      error: 'FST_ERR_CTP_INVALID_JSON_BODY',
+      message: 'JSON invalido no corpo da requisicao.'
     });
   });
 });
@@ -100,6 +146,7 @@ async function testConfig(
     GOOGLE_CLIENT_ID: '',
     GOOGLE_CLIENT_IDS: '',
     STORAGE_DIR: storageDir,
+    ADMIN_API_TOKEN: 'admin-test-token-with-safe-length',
     corsOrigins: ['http://localhost:*'],
     googleClientIds: [],
     ...overrides
